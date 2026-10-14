@@ -1,0 +1,1262 @@
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&family=Inter:wght@400;500;600;700;800;900&family=Tajawal:wght@400;500;700;800;900&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ══════════════════════════════════════════════════════════════════════════
+   NEXUS — product design tokens
+   ──────────────────────────────────────────────────────────────────────────
+   Paper and ink, with one signal colour. Neutrals sit on the logo's green-grey
+   axis; emerald is reserved for "act here" and "this is live" so it keeps its
+   meaning. Values are RGB triplets so Tailwind opacity modifiers work.
+
+   canvas   app background            surface  panels, lists, the page body
+   raised   inputs, secondary fills    overlay  hover / pressed on raised
+   line     hairlines                  ink 1-4  text, strongest → faintest
+   brand    the signal (buttons, active, live) — brand-fg is text placed on it
+   nav      the sidebar, dark in both themes: it is the product's signature
+   ══════════════════════════════════════════════════════════════════════════ */
+:root {
+  --canvas: 244 246 245;
+  --surface: 255 255 255;
+  --raised: 243 245 244;
+  --overlay: 233 237 235;
+  --line: 225 230 227;
+  --line-strong: 205 211 208;
+  --ink: 17 23 20;
+  --ink-2: 61 70 65;
+  --ink-3: 105 115 110;
+  --ink-4: 154 163 158;
+
+  /* #128245 on white is 4.9:1 — AA for the 13–14px labels buttons carry. The
+     logo's brighter #1DAE60 is used only where it isn't holding text. */
+  --brand: 18 130 69;
+  --brand-strong: 15 106 57;
+  --brand-fg: 255 255 255;
+  --brand-soft: 231 246 237;
+
+  /* Conversation surface. Outgoing bubbles keep a WhatsApp-like green so the
+     inbox reads as WhatsApp to anyone who has used it — just a quieter one. */
+  --chat-bg: 238 241 239;
+  --bubble-out: 214 243 225;
+  --bubble-in: 255 255 255;
+
+  --nav: 13 19 16;
+  --nav-ink: 232 237 234;
+  --nav-muted: 138 150 144;
+  --nav-line: 34 42 38;
+  --nav-hover: 28 36 32;
+
+  /* Legacy WhatsApp-palette variables, re-pointed at the tokens above so the
+     few places still reading them inherit the new palette. */
+  --wa-accent: rgb(var(--brand));
+  --wa-accent-dark: rgb(var(--brand-strong));
+  --wa-accent-light: rgb(var(--brand-soft));
+  --wa-bg-primary: rgb(var(--canvas));
+  --wa-bg-secondary: rgb(var(--surface));
+  --wa-bg-tertiary: rgb(var(--raised));
+  --wa-bubble-sent: #D9F5E3;
+  --wa-bubble-received: rgb(var(--surface));
+  --wa-text-primary: rgb(var(--ink));
+  --wa-text-secondary: rgb(var(--ink-3));
+  --wa-border-subtle: rgb(var(--line));
+
+  --font-latin: 'IBM Plex Sans', 'IBM Plex Sans Arabic', 'Segoe UI', system-ui, sans-serif;
+  --font-arabic: 'IBM Plex Sans Arabic', 'IBM Plex Sans', 'Segoe UI', system-ui, sans-serif;
+
+  /* ─── Motion — ONE language for the whole product ─────────────────────
+     ease-out    : expo-out. Decisive start, calm settle. Entrances, reveals.
+     ease-spring : soft overshoot. Small confirmations (toggles, checks).
+     ease-swift  : symmetric. Properties that morph in place (colour, size).
+     fast = touch feedback · base = UI state change · slow = panel / screen.
+     Only transform and opacity are animated, so nothing triggers layout. */
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-spring: cubic-bezier(0.34, 1.45, 0.64, 1);
+  --ease-swift: cubic-bezier(0.65, 0, 0.35, 1);
+  --dur-fast: 140ms;
+  --dur-base: 220ms;
+  --dur-slow: 400ms;
+
+  /* ─── Shadcn UI tokens (light), derived from the palette above ─── */
+  --background: 150 9% 96%;
+  --foreground: 150 15% 8%;
+  --card: 0 0% 100%;
+  --card-foreground: 150 15% 8%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 150 15% 8%;
+  --primary: 147 76% 29%;
+  --primary-foreground: 0 0% 100%;
+  --secondary: 150 7% 96%;
+  --secondary-foreground: 150 15% 8%;
+  --muted: 150 7% 96%;
+  --muted-foreground: 150 4% 43%;
+  --accent: 150 7% 94%;
+  --accent-foreground: 150 15% 8%;
+  --destructive: 0 69% 56%;
+  --destructive-foreground: 0 0% 100%;
+  --border: 150 7% 89%;
+  --input: 150 7% 89%;
+  --ring: 147 76% 29%;
+  --radius: 0.5rem;
+}
+
+html.dark {
+  color-scheme: dark;
+  --canvas: 10 14 12;
+  --surface: 17 23 20;
+  --raised: 25 32 28;
+  --overlay: 34 42 38;
+  --line: 37 45 41;
+  --line-strong: 52 62 57;
+  --ink: 231 236 233;
+  --ink-2: 180 189 184;
+  --ink-3: 138 148 143;
+  --ink-4: 94 104 99;
+
+  /* Dark mode inverts the button: bright emerald carrying near-black text. */
+  --brand: 46 204 116;
+  --brand-strong: 72 219 137;
+  --brand-fg: 6 17 11;
+  --brand-soft: 20 46 32;
+
+  --chat-bg: 12 17 15;
+  --bubble-out: 18 66 43;
+  --bubble-in: 28 36 32;
+
+  --nav: 8 11 10;
+  --nav-line: 30 37 33;
+  --nav-hover: 24 31 28;
+
+  --wa-bubble-sent: #10402A;
+
+  --background: 150 17% 5%;
+  --foreground: 150 9% 91%;
+  --card: 150 15% 8%;
+  --card-foreground: 150 9% 91%;
+  --popover: 150 13% 11%;
+  --popover-foreground: 150 9% 91%;
+  --primary: 146 63% 49%;
+  --primary-foreground: 150 48% 5%;
+  --secondary: 150 12% 11%;
+  --secondary-foreground: 150 9% 91%;
+  --muted: 150 12% 11%;
+  --muted-foreground: 150 4% 56%;
+  --accent: 150 11% 15%;
+  --accent-foreground: 150 9% 91%;
+  --destructive: 0 72% 63%;
+  --destructive-foreground: 0 0% 100%;
+  --border: 150 10% 16%;
+  --input: 150 11% 15%;
+  --ring: 146 63% 49%;
+}
+
+/* ─── Reset & base ──────────────────────────────────────── */
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+html {
+  font-family: var(--font-latin);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  scroll-behavior: smooth;
+  color-scheme: light;
+  /* Figures line up in every table, counter and timestamp by default. */
+  font-variant-numeric: tabular-nums;
+}
+
+body {
+  min-height: 100vh;
+  background-color: rgb(var(--canvas));
+  color: rgb(var(--ink));
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+
+/* ─── Arabic / RTL ───────────────────────────────────────────
+   Plex Sans Arabic first, so Arabic glyphs come from it and Latin glyphs from
+   its matched Latin set. Line height is raised on the body only: forcing it on
+   every element (as this file once did) out-ranked `leading-none` and broke
+   every badge and counter in Arabic. */
+html[dir="rtl"],
+html.lang-ar {
+  font-family: var(--font-arabic);
+}
+html[dir="rtl"] body,
+html.lang-ar body {
+  direction: rtl;
+  text-align: right;
+  line-height: 1.6;
+}
+html[dir="rtl"] input,
+html[dir="rtl"] textarea,
+html[dir="rtl"] select,
+html[dir="rtl"] button,
+html.lang-ar input,
+html.lang-ar textarea,
+html.lang-ar select,
+html.lang-ar button {
+  font-family: var(--font-arabic);
+}
+
+/* ─── SpotlightCard (ReactBits) ──────────────────────────── */
+.spotlight-card {
+  position: relative;
+  overflow: hidden;
+  --mouse-x: 50%;
+  --mouse-y: 50%;
+  --spotlight-color: rgb(var(--brand) / 0.08);
+}
+.spotlight-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at var(--mouse-x) var(--mouse-y), var(--spotlight-color), transparent 75%);
+  opacity: 0;
+  transition: opacity 0.4s ease;
+  pointer-events: none;
+  z-index: 0;
+}
+.spotlight-card:hover::before {
+  opacity: 1;
+}
+.spotlight-card > * {
+  position: relative;
+  z-index: 1;
+}
+
+/* ─── Font inherit for all form elements ────────────────── */
+input, textarea, select, button {
+  font-family: inherit;
+}
+
+/* ─── Placeholder ────────────────────────────────────────── */
+input::placeholder,
+textarea::placeholder {
+  color: rgb(var(--ink-4));
+}
+
+/* ─── RTL select dropdown arrow ──────────────────────────── */
+html[dir="ltr"] select,
+html:not([dir="rtl"]) select {
+  -webkit-appearance: none;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%239ca3af' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.75rem center;
+  padding-right: 2.25rem;
+  padding-left: 0.75rem;
+}
+
+html[dir="rtl"] select {
+  -webkit-appearance: none;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%239ca3af' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: left 0.75rem center;
+  padding-left: 2.25rem;
+  padding-right: 0.75rem;
+}
+
+select:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px rgb(var(--brand) / 0.16);
+  border-color: rgb(var(--brand));
+}
+
+/* ─── Text selection ─────────────────────────────────────── */
+::selection {
+  background: rgb(var(--brand) / 0.2);
+  color: rgb(var(--ink));
+}
+
+/* ─── Scrollbars ─────────────────────────────────────────── */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgb(var(--line-strong)) transparent;
+}
+
+*::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+*::-webkit-scrollbar-thumb {
+  background: rgb(var(--line-strong));
+  border-radius: 9999px;
+}
+*::-webkit-scrollbar-thumb:hover {
+  background: rgb(var(--ink-4));
+}
+*::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+/* ─── Hide all scrollbars on mobile ─────────────────────── */
+@media (max-width: 639px) {
+  * {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  *::-webkit-scrollbar {
+    width: 0;
+    height: 0;
+    display: none;
+  }
+}
+
+/* ─── iOS safe-area padding utilities ───────────────────── */
+.pb-safe {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+.mb-safe {
+  margin-bottom: env(safe-area-inset-bottom);
+}
+
+/* ─── Floating mobile bottom-nav reserved space ──────────────
+   Single source of truth for the room the floating bottom nav
+   occupies (pill height + gap + safe-area). 0 on sm+ where the
+   nav is hidden. Consumed by the dashboard scroll spacer, the
+   full-height pages' own scroll areas, and floating action bars
+   via `[var(--bottom-nav-space)]` so nothing hides behind it. */
+:root {
+  --bottom-nav-space: 0px;
+}
+@media (max-width: 639.98px) {
+  :root {
+    --bottom-nav-space: calc(3.5rem + env(safe-area-inset-bottom));
+  }
+}
+
+/* ─── Scrollbar-none utility ─────────────────────────────── */
+.scrollbar-none {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
+}
+
+/* ─── Focus ring global ──────────────────────────────────── */
+:focus-visible {
+  outline: 2px solid rgb(var(--brand));
+  outline-offset: 2px;
+}
+
+/* ─── Smooth transitions on theme change ─────────────────── */
+*,
+*::before,
+*::after {
+  transition-property: background-color, border-color, color, fill, stroke;
+  transition-duration: 0.15s;
+  transition-timing-function: ease;
+}
+
+/* Reset transitions for transform/opacity (avoid sluggishness) */
+.no-transition,
+.no-transition *,
+[data-no-transition],
+[data-no-transition] * {
+  transition: none !important;
+}
+
+/* ─── RTL layout utilities ───────────────────────────────── */
+
+/* Sidebar: flip position from left to right in RTL */
+html[dir="rtl"] .sidebar-panel {
+  left: auto;
+  right: 0;
+  transform-origin: right center;
+}
+
+html[dir="rtl"] .sidebar-panel.translate-x-full {
+  transform: translateX(100%);
+}
+html[dir="rtl"] .sidebar-panel.-translate-x-full {
+  transform: translateX(100%);
+}
+html[dir="rtl"] .sidebar-panel.translate-x-0 {
+  transform: translateX(0);
+}
+
+/* Mobile sidebar open/close - RTL: slides from right */
+html[dir="rtl"] .sidebar-mobile-slide {
+  right: 0;
+  left: auto;
+}
+
+html[dir="rtl"] .sidebar-mobile-slide.closed {
+  transform: translateX(100%);
+}
+html[dir="rtl"] .sidebar-mobile-slide.open {
+  transform: translateX(0);
+}
+
+/* Mobile hamburger button: flip to right side in RTL */
+html[dir="rtl"] .sidebar-hamburger {
+  right: 1rem;
+  left: auto;
+}
+
+/* Message bubbles: LTR sent=right, RTL layout handled via flex dir */
+[dir="rtl"] .message-bubble-sent {
+  border-radius: 16px 4px 16px 16px;
+}
+[dir="rtl"] .message-bubble-received {
+  border-radius: 4px 16px 16px 16px;
+}
+
+/* Toast: flip position in RTL */
+html[dir="rtl"] .toast-container {
+  right: auto;
+  left: 1rem;
+}
+
+/* Emoji picker: flip direction */
+html[dir="rtl"] .emoji-picker {
+  right: auto;
+  left: 0;
+}
+
+/* Dropdown menus: align to end in RTL */
+html[dir="rtl"] [data-radix-popper-content-wrapper] {
+  direction: rtl;
+}
+
+/* ─── Arabic number formatting ───────────────────────────── */
+html[dir="rtl"] .number-display {
+  font-variant-numeric: normal;
+  font-feature-settings: normal;
+}
+
+/* ─── Chat window RTL ────────────────────────────────────── */
+html[dir="rtl"] .chat-messages {
+  direction: rtl;
+}
+
+html[dir="rtl"] .chat-composer {
+  direction: rtl;
+}
+
+/* Typing indicator in RTL */
+html[dir="rtl"] .typing-indicator {
+  flex-direction: row-reverse;
+}
+
+/* ─── Table cell alignment ────────────────────────────────── */
+/*
+ * `start` is the logical value: left in LTR, right in RTL. One rule, both
+ * directions — and it also overrides the browser's odd default of centring `th`.
+ *
+ * This *replaces* a pair of `html[dir="rtl"] td { text-align: right }` rules.
+ * Those had specificity (0,1,2), which outranks a Tailwind `.text-center`
+ * (0,1,0), so in Arabic every centred or end-aligned cell in the app was
+ * silently forced back to the right — an empty-state message would sit hard
+ * against the edge while its icon (centred by `mx-auto`, a margin) stayed put.
+ *
+ * `:where()` contributes zero specificity, so any alignment utility now wins,
+ * while author origin still beats the UA sheet. Cells that need a physical
+ * side must say so with `text-start` / `text-end`, never `text-left`/`text-right`.
+ */
+:where(th, td) {
+  text-align: start;
+}
+
+/* ─── Form elements RTL ──────────────────────────────────── */
+html[dir="rtl"] input[type="text"],
+html[dir="rtl"] input[type="email"],
+html[dir="rtl"] input[type="tel"],
+html[dir="rtl"] input[type="search"],
+html[dir="rtl"] input[type="password"],
+html[dir="rtl"] textarea {
+  text-align: right;
+  direction: rtl;
+}
+
+/* Search input: flip icon side */
+html[dir="rtl"] .search-input-wrapper .search-icon {
+  left: auto;
+  right: 0.75rem;
+}
+html[dir="rtl"] .search-input-wrapper input {
+  padding-right: 2.5rem;
+  padding-left: 0.75rem;
+}
+
+/* ─── Icon mirroring for RTL ─────────────────────────────── */
+/* Icons that indicate direction should be mirrored in RTL */
+html[dir="rtl"] .icon-mirror {
+  transform: scaleX(-1);
+}
+
+/* ─── Animation direction fix for RTL ───────────────────── */
+@keyframes slideInFromRight {
+  from { opacity: 0; transform: translateX(12px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes slideInFromLeft {
+  from { opacity: 0; transform: translateX(-12px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+html[dir="ltr"] .animate-slide-in {
+  animation: slideInFromLeft 0.2s ease-out;
+}
+html[dir="rtl"] .animate-slide-in {
+  animation: slideInFromRight 0.2s ease-out;
+}
+
+/* ─── Existing animations ────────────────────────────────── */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes shimmer {
+  0%   { background-position: -1000px 0; }
+  100% { background-position: 1000px 0; }
+}
+
+/* ─── Lead alert popup: countdown bar + side entrance ─────── */
+@keyframes leadAlertCountdown {
+  from { transform: scaleX(1); }
+  to   { transform: scaleX(0); }
+}
+
+html[dir="ltr"] .lead-alert-enter { animation: slideInFromRight 0.32s cubic-bezier(0.16, 1, 0.3, 1); }
+html[dir="rtl"] .lead-alert-enter { animation: slideInFromLeft 0.32s cubic-bezier(0.16, 1, 0.3, 1); }
+
+/* ─── Donezo dashboard utilities ─────────────────────────── */
+
+/* Soft hatched fill used for inactive analytics bars */
+.dz-hatch {
+  background-image: repeating-linear-gradient(
+    45deg,
+    rgba(22, 163, 74, 0.14) 0,
+    rgba(22, 163, 74, 0.14) 2px,
+    transparent 2px,
+    transparent 7px
+  );
+}
+.dark .dz-hatch {
+  background-image: repeating-linear-gradient(
+    45deg,
+    rgba(37, 211, 102, 0.16) 0,
+    rgba(37, 211, 102, 0.16) 2px,
+    transparent 2px,
+    transparent 7px
+  );
+}
+
+/* Bars grow from the bottom on first paint */
+@keyframes dzBarGrow {
+  from { transform: scaleY(0); }
+  to   { transform: scaleY(1); }
+}
+.dz-bar {
+  transform-origin: bottom;
+  animation: dzBarGrow 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+/* Live voice-recording equalizer (broadcast builder + chat composer) */
+@keyframes voiceRecWave {
+  0%, 100% { transform: scaleY(0.35); }
+  50%      { transform: scaleY(1); }
+}
+.voice-rec-wave span {
+  height: 20px;
+  transform-origin: bottom;
+  animation: voiceRecWave 0.9s ease-in-out infinite;
+}
+.voice-rec-wave span:nth-child(1) { animation-delay: 0s; }
+.voice-rec-wave span:nth-child(2) { animation-delay: 0.15s; }
+.voice-rec-wave span:nth-child(3) { animation-delay: 0.3s; }
+.voice-rec-wave span:nth-child(4) { animation-delay: 0.45s; }
+.voice-rec-wave span:nth-child(5) { animation-delay: 0.6s; }
+
+/* Voice-note scrubber (chat message player). Fill is driven by --vn-progress set
+   inline per instance, so each player owns its own bar (a shared <style> block
+   would make every voice note animate together). */
+.vn-range { -webkit-appearance: none; appearance: none; height: .35rem; border-radius: 9999px; outline: none; width: 100%; background: transparent; }
+.vn-range::-webkit-slider-runnable-track { height: .35rem; border-radius: 9999px; }
+.vn-range::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: .95rem; height: .95rem; border-radius: 9999px; margin-top: -.3rem; background: #fff; border: 2px solid rgb(var(--brand)); box-shadow: 0 2px 8px rgba(0, 0, 0, .22); }
+.vn-range::-moz-range-thumb { width: .95rem; height: .95rem; border-radius: 9999px; background: #fff; border: 2px solid rgb(var(--brand)); }
+.vn-light::-webkit-slider-runnable-track { background: linear-gradient(90deg, rgb(var(--brand)) 0%, rgb(var(--brand)) var(--vn-progress, 0%), rgb(var(--ink) / .14) var(--vn-progress, 0%), rgb(var(--ink) / .14) 100%); }
+.vn-dark::-webkit-slider-runnable-track { background: linear-gradient(90deg, rgb(var(--brand)) 0%, rgb(var(--brand)) var(--vn-progress, 0%), rgb(var(--ink) / .14) var(--vn-progress, 0%), rgb(var(--ink) / .14) 100%); }
+.vn-range::-moz-range-progress { height: .35rem; border-radius: 9999px; background: rgb(var(--brand)); }
+.vn-light::-moz-range-track { height: .35rem; border-radius: 9999px; background: rgba(255, 255, 255, .45); }
+.vn-dark::-moz-range-track { height: .35rem; border-radius: 9999px; background: rgba(255, 255, 255, .15); }
+
+/* ─── Toast notification system ─────────────────────────── */
+
+@keyframes tf_in_top {
+  0%   { transform: translateY(calc(-100% - 28px)) scale(0.88); opacity: 0; }
+  58%  { transform: translateY(9px) scale(1.025); opacity: 1; }
+  76%  { transform: translateY(-4px) scale(0.99); }
+  100% { transform: translateY(0) scale(1); opacity: 1; }
+}
+@keyframes tf_out_top {
+  0%   { transform: translateY(0) scale(1); opacity: 1; }
+  22%  { transform: translateY(6px) scale(1.01); }
+  100% { transform: translateY(calc(-100% - 28px)) scale(0.88); opacity: 0; }
+}
+@keyframes tf_in_btm {
+  0%   { transform: translateY(calc(100% + 28px)) scale(0.88); opacity: 0; }
+  58%  { transform: translateY(-9px) scale(1.025); opacity: 1; }
+  76%  { transform: translateY(4px) scale(0.99); }
+  100% { transform: translateY(0) scale(1); opacity: 1; }
+}
+@keyframes tf_out_btm {
+  0%   { transform: translateY(0) scale(1); opacity: 1; }
+  100% { transform: translateY(calc(100% + 28px)) scale(0.88); opacity: 0; }
+}
+@keyframes tf_prog {
+  from { transform: scaleX(1); }
+  to   { transform: scaleX(0); }
+}
+
+/* Animation routing via data attributes — no inline style needed */
+[data-tf-card][data-from-top="true"]:not([data-exiting]) {
+  animation: tf_in_top  580ms cubic-bezier(0.34,1.56,0.64,1) forwards;
+}
+[data-tf-card][data-from-top="true"][data-exiting] {
+  animation: tf_out_top 340ms cubic-bezier(0.36,0,0.66,0)   forwards;
+}
+[data-tf-card][data-from-top="false"]:not([data-exiting]) {
+  animation: tf_in_btm  580ms cubic-bezier(0.34,1.56,0.64,1) forwards;
+}
+[data-tf-card][data-from-top="false"][data-exiting] {
+  animation: tf_out_btm 340ms cubic-bezier(0.36,0,0.66,0)   forwards;
+}
+
+/* Accent bar colour per type */
+[data-tf-type="message"] .tf-bar,
+[data-tf-type="success"] .tf-bar { background: rgb(var(--brand)); }
+[data-tf-type="error"]   .tf-bar { background: #DC4444; }
+[data-tf-type="info"]    .tf-bar { background: #3B7BE0; }
+[data-tf-type="warning"] .tf-bar { background: #D98E04; }
+
+/* Progress bar fill colour per type */
+[data-tf-type="message"] .tf-prog-fill,
+[data-tf-type="success"] .tf-prog-fill { background: rgb(var(--brand)); }
+[data-tf-type="error"]   .tf-prog-fill { background: #ef4444; }
+[data-tf-type="info"]    .tf-prog-fill { background: #3b82f6; }
+[data-tf-type="warning"] .tf-prog-fill { background: #f59e0b; }
+
+/* Progress fill animation — duration driven by --tf-dur (set via CSS var, one style prop) */
+.tf-prog-fill {
+  width: 100%;
+  height: 100%;
+  border-radius: 9999px;
+  opacity: 0.55;
+  transform-origin: left;
+  animation: tf_prog var(--tf-dur, 4500ms) linear forwards;
+}
+
+html[dir="rtl"] .tf-prog-fill {
+  transform-origin: right;
+}
+
+/* Icon container bg per type */
+[data-tf-type="success"] .tf-icon-wrap { background: rgb(var(--brand) / 0.12); }
+[data-tf-type="error"]   .tf-icon-wrap { background: rgba(239,68,68,0.12);  }
+[data-tf-type="info"]    .tf-icon-wrap { background: rgba(59,130,246,0.12); }
+[data-tf-type="warning"] .tf-icon-wrap { background: rgba(245,158,11,0.12); }
+
+/* Icon colour per type */
+[data-tf-type="success"] .tf-icon-wrap svg { color: rgb(var(--brand)); }
+[data-tf-type="error"]   .tf-icon-wrap svg { color: #f87171; }
+[data-tf-type="info"]    .tf-icon-wrap svg { color: #60a5fa; }
+[data-tf-type="warning"] .tf-icon-wrap svg { color: #fbbf24; }
+
+/* Avatar gradient */
+.tf-avatar {
+  background: rgb(var(--brand));
+}
+
+/* Top-edge shimmer */
+.tf-shimmer {
+  background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.18) 50%, transparent 100%);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   PREMIUM LANDING PAGE — emerald-charcoal + luxury gold design system
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+:root {
+  --lux-gold: #d4af37;
+  --lux-gold-light: #f3d98b;
+  --lux-gold-deep: #b8860b;
+  --lux-emerald: #25d366;
+  --lux-emerald-deep: #128c7e;
+  --lux-ink: #050b14;
+  --lux-ink-2: #081320;
+  --font-display-latin: 'Inter', 'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif;
+  --font-display-arabic: 'Tajawal', 'IBM Plex Arabic', system-ui, sans-serif;
+}
+
+/* Landing root uses Inter for LTR; RTL keeps the global IBM Plex Arabic body */
+.lux-root { font-family: var(--font-display-latin); }
+html[dir="rtl"] .lux-root,
+html.lang-ar .lux-root { font-family: 'IBM Plex Arabic', system-ui, sans-serif; }
+
+/* ─── Gradient text utilities ───────────────────────────── */
+.text-gold-gradient {
+  background-image: linear-gradient(120deg, #f3d98b 0%, #d4af37 45%, #b8860b 70%, #f3d98b 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+.text-emerald-gradient {
+  background-image: linear-gradient(120deg, #5cf0a0 0%, #25d366 50%, #0f9b6c 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+.text-lux-gradient {
+  background-image: linear-gradient(120deg, #ffffff 0%, #d8e4dd 40%, #9fb3a8 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* ─── Gradient borders / glass surfaces ─────────────────── */
+.lux-glass {
+  background: linear-gradient(180deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.015) 100%);
+  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(14px);
+}
+.lux-ring-gold {
+  box-shadow: 0 0 0 1px rgba(212,175,55,0.28), 0 18px 60px -18px rgba(212,175,55,0.25);
+}
+.lux-hairline {
+  position: relative;
+}
+.lux-hairline::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1px;
+  background: linear-gradient(160deg, rgba(255,255,255,0.10), rgba(255,255,255,0.02) 45%, transparent 78%);
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+}
+
+/* ─── Premium card surface (modern, near-borderless) ────── */
+.lux-card {
+  position: relative;
+  background: linear-gradient(180deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.018) 100%);
+  border: 1px solid rgba(255,255,255,0.055);
+  border-radius: 1rem;
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.05),
+    0 22px 45px -30px rgba(0,0,0,0.9);
+  transition: transform 0.35s cubic-bezier(0.16,1,0.3,1),
+              border-color 0.35s ease,
+              box-shadow 0.35s ease,
+              background 0.35s ease;
+}
+.lux-card:hover {
+  border-color: rgba(37,211,102,0.22);
+  background: linear-gradient(180deg, rgba(37,211,102,0.06) 0%, rgba(255,255,255,0.015) 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.07),
+    0 30px 60px -28px rgba(0,0,0,0.95),
+    0 0 36px -14px rgba(37,211,102,0.22);
+}
+/* Gold-accent variant for highlighted / featured cards */
+.lux-card-gold {
+  border-color: rgba(212,175,55,0.30);
+  background: linear-gradient(180deg, rgba(212,175,55,0.10) 0%, rgba(37,211,102,0.04) 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.08),
+    0 30px 64px -26px rgba(0,0,0,0.95),
+    0 0 44px -16px rgba(212,175,55,0.28);
+}
+.lux-card-gold:hover {
+  border-color: rgba(212,175,55,0.45);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.10),
+    0 36px 70px -26px rgba(0,0,0,1),
+    0 0 56px -14px rgba(212,175,55,0.38);
+}
+
+/* ─── Background textures ───────────────────────────────── */
+.lux-grid {
+  background-image:
+    linear-gradient(to right, rgba(255,255,255,0.035) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255,255,255,0.035) 1px, transparent 1px);
+  background-size: 56px 56px;
+  -webkit-mask-image: radial-gradient(ellipse 80% 60% at 50% 0%, #000 35%, transparent 75%);
+  mask-image: radial-gradient(ellipse 80% 60% at 50% 0%, #000 35%, transparent 75%);
+}
+
+/* ─── Floating animation for hero stat cards ────────────── */
+@keyframes luxFloat {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-12px); }
+}
+.lux-float       { animation: luxFloat 6s ease-in-out infinite; }
+.lux-float-slow  { animation: luxFloat 8s ease-in-out infinite; }
+.lux-float-delay { animation: luxFloat 7s ease-in-out infinite; animation-delay: 1.2s; }
+
+@media (prefers-reduced-motion: reduce) {
+  .lux-float, .lux-float-slow, .lux-float-delay { animation: none; }
+}
+
+/* ─── Scroll reveal ─────────────────────────────────────── */
+.lux-reveal {
+  opacity: 0;
+  transform: translateY(28px);
+  filter: blur(6px);
+  transition: opacity 0.7s cubic-bezier(0.16,1,0.3,1),
+              transform 0.7s cubic-bezier(0.16,1,0.3,1),
+              filter 0.7s ease;
+  will-change: transform, opacity;
+}
+.lux-reveal.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+  filter: blur(0);
+}
+@media (prefers-reduced-motion: reduce) {
+  .lux-reveal { opacity: 1; transform: none; filter: none; transition: none; }
+}
+
+/* ─── Logo marquee ──────────────────────────────────────── */
+@keyframes luxMarquee {
+  from { transform: translateX(0); }
+  to   { transform: translateX(-50%); }
+}
+.lux-marquee-track {
+  display: flex;
+  width: max-content;
+  animation: luxMarquee 32s linear infinite;
+}
+html[dir="rtl"] .lux-marquee-track { animation-direction: reverse; }
+.lux-marquee:hover .lux-marquee-track { animation-play-state: paused; }
+@media (prefers-reduced-motion: reduce) {
+  .lux-marquee-track { animation: none; }
+}
+
+/* ─── Conic glow accent ─────────────────────────────────── */
+.lux-aurora {
+  background:
+    radial-gradient(40% 50% at 20% 10%, rgba(37,211,102,0.18), transparent 60%),
+    radial-gradient(35% 45% at 85% 15%, rgba(212,175,55,0.14), transparent 60%),
+    radial-gradient(45% 55% at 50% 100%, rgba(18,140,126,0.16), transparent 60%);
+}
+
+/* Premium primary button sheen */
+.lux-btn-primary {
+  background: linear-gradient(180deg, #2ee676 0%, #1fbf63 100%);
+  box-shadow: 0 10px 30px -8px rgba(37,211,102,0.55), inset 0 1px 0 rgba(255,255,255,0.25);
+}
+.lux-btn-primary:hover {
+  box-shadow: 0 14px 40px -8px rgba(37,211,102,0.7), inset 0 1px 0 rgba(255,255,255,0.3);
+}
+.lux-btn-gold {
+  background: linear-gradient(180deg, #f3d98b 0%, #d4af37 100%);
+  color: #1a1407;
+  box-shadow: 0 10px 30px -8px rgba(212,175,55,0.5), inset 0 1px 0 rgba(255,255,255,0.35);
+}
+
+/* Sheen sweep for premium buttons (parent must have the `group` class) */
+.lux-sheen {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  border-radius: inherit;
+  pointer-events: none;
+}
+.lux-sheen::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: -60%;
+  width: 45%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.28), transparent);
+  transform: skewX(-20deg);
+  transition: left 0.7s cubic-bezier(0.16,1,0.3,1);
+}
+.group:hover .lux-sheen::before { left: 130%; }
+@media (prefers-reduced-motion: reduce) {
+  .lux-sheen::before { transition: none; }
+}
+
+/* Idle attention pulse ring for the hero download CTA */
+@keyframes luxPulseRing {
+  0%   { box-shadow: 0 0 0 0 rgba(37,211,102,0.30); }
+  70%  { box-shadow: 0 0 0 12px rgba(37,211,102,0); }
+  100% { box-shadow: 0 0 0 0 rgba(37,211,102,0); }
+}
+.lux-pulse-ring { animation: luxPulseRing 2.6s cubic-bezier(0.16,1,0.3,1) infinite; }
+.lux-pulse-ring:hover { animation-play-state: paused; }
+@media (prefers-reduced-motion: reduce) {
+  .lux-pulse-ring { animation: none; }
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   PWA — NATIVE APP FEEL (installed / standalone only)
+   Gated behind html.pwa-standalone (set in bootstrap.js before first paint) so
+   the site in a normal browser tab keeps normal website behaviour, while the
+   installed app feels native: no text-selection on chrome, no rubber-band /
+   pull-to-refresh, no tap-highlight flash, no zoom-on-input.
+   ══════════════════════════════════════════════════════════════════════════ */
+html.pwa-standalone,
+html.pwa-standalone body {
+  overscroll-behavior: none;                 /* kill pull-to-refresh + rubber-band */
+  -webkit-tap-highlight-color: transparent;
+}
+html.pwa-standalone {
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;               /* no long-press callout on iOS */
+}
+/* Re-enable selection where it genuinely matters (typing + opt-in content). */
+html.pwa-standalone input,
+html.pwa-standalone textarea,
+html.pwa-standalone [contenteditable="true"],
+html.pwa-standalone .select-text,
+html.pwa-standalone .select-text * {
+  -webkit-user-select: text;
+  user-select: text;
+  -webkit-touch-callout: default;
+}
+/* Keep mobile inputs ≥16px so iOS doesn't auto-zoom when focusing a field. */
+@media (max-width: 640px) {
+  html.pwa-standalone input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
+  html.pwa-standalone textarea,
+  html.pwa-standalone select {
+    font-size: 16px;
+  }
+}
+
+/* Extra safe-area helpers (top / sides) — .pb-safe already exists above. */
+.pt-safe { padding-top: env(safe-area-inset-top); }
+.ps-safe { padding-inline-start: env(safe-area-inset-left); }
+.pe-safe { padding-inline-end: env(safe-area-inset-right); }
+.min-h-dvh { min-height: 100dvh; }
+
+/* ══════════════════════════════════════════════════════════════════════════
+   LAUNCH / SPLASH SCREEN — installed app only, on cold start.
+   Rendered statically in <body> so it paints instantly (no white flash);
+   SplashController fades it out once the app is interactive. Hidden entirely in
+   a normal browser tab.
+   ══════════════════════════════════════════════════════════════════════════ */
+#app-splash { display: none; }
+html.pwa-standalone #app-splash {
+  display: flex;
+  position: fixed;
+  inset: 0;
+  z-index: 2147483000;
+  align-items: center;
+  justify-content: center;
+  padding-bottom: env(safe-area-inset-bottom);
+  overflow: hidden;
+  /* Deep brand canvas — same family as the app icon, so launch → splash is seamless */
+  background:
+    radial-gradient(90% 60% at 50% 38%, rgba(37,211,102,0.10) 0%, transparent 60%),
+    linear-gradient(180deg, #0d1f16 0%, #081511 55%, #05080c 100%);
+  opacity: 1;
+  /* Backdrop fades AFTER the logo dissolves → layered, native exit */
+  transition: opacity var(--dur-slow) ease var(--dur-fast);
+}
+#app-splash.is-hiding { opacity: 0; pointer-events: none; }
+
+/* The logo is the whole show: quiet entrance, then a slow breath. */
+.app-splash__center {
+  position: relative;
+  display: grid;
+  place-items: center;
+  animation: splashCenterIn 0.9s var(--ease-out) both;
+}
+.app-splash__halo {                      /* soft emerald light breathing behind the mark */
+  position: absolute;
+  inset: -64px;
+  border-radius: 9999px;
+  background: radial-gradient(circle, rgba(37,211,102,0.26) 0%, rgba(37,211,102,0.07) 46%, transparent 70%);
+  filter: blur(12px);
+  animation: splashHalo 3.6s ease-in-out 0.9s infinite;
+  will-change: transform, opacity;
+}
+.app-splash__logo {
+  position: relative;
+  display: block;
+  width: 118px;
+  height: 118px;
+  object-fit: contain;
+  filter: drop-shadow(0 14px 36px rgba(37,211,102,0.35));
+  animation: splashBreathe 3.6s ease-in-out 0.9s infinite;
+  will-change: transform;
+}
+
+/* Exit — smooth fade + slight scale. No flash, no snap. */
+#app-splash.is-hiding .app-splash__center {
+  animation: splashCenterOut 0.55s var(--ease-out) both;
+}
+
+@keyframes splashCenterIn {
+  from { opacity: 0; transform: scale(0.9); }
+  to   { opacity: 1; transform: scale(1); }
+}
+@keyframes splashCenterOut {
+  from { opacity: 1; transform: scale(1); }
+  to   { opacity: 0; transform: scale(1.06); }
+}
+@keyframes splashBreathe {
+  0%, 100% { transform: scale(1); }
+  50%      { transform: scale(1.045); }
+}
+@keyframes splashHalo {
+  0%, 100% { transform: scale(1);    opacity: 0.5; }
+  50%      { transform: scale(1.14); opacity: 1; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .app-splash__center, .app-splash__halo, .app-splash__logo { animation: none; opacity: 1; }
+  #app-splash.is-hiding .app-splash__center { animation: none; opacity: 0; }
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   SKELETON LOADING BLOCKS — premium content placeholders (use <Skeleton/>).
+   ══════════════════════════════════════════════════════════════════════════ */
+/* In the components layer so a rounded-* utility on the element wins. */
+@layer components {
+  .skeleton { position: relative; overflow: hidden; background: rgb(var(--raised)); border-radius: 8px; }
+  .dark .skeleton { background: rgb(var(--overlay)); }
+}
+.skeleton::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(90deg, transparent, rgb(255 255 255 / 0.55), transparent);
+  animation: skeletonSweep 1.5s infinite;
+}
+.dark .skeleton::after { background: linear-gradient(90deg, transparent, rgba(255,255,255,0.08), transparent); }
+@keyframes skeletonSweep { 100% { transform: translateX(100%); } }
+@media (prefers-reduced-motion: reduce) { .skeleton::after { animation: none; } }
+
+/* Staged content reveal — sections fade + rise in as their data arrives,
+   replacing the skeleton in place (layout stays stable, no jumps). */
+.section-reveal { animation: sectionReveal var(--dur-slow) var(--ease-out) both; }
+@keyframes sectionReveal {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@media (prefers-reduced-motion: reduce) { .section-reveal { animation: none; } }
+
+/* ══════════════════════════════════════════════════════════════════════════
+   TOUCH FEEDBACK — premium press physics for every interactive element.
+   Press is instant (fingers expect zero lag); release springs back softly.
+   Compositor-only (transform), so it never janks a scroll.
+   ══════════════════════════════════════════════════════════════════════════ */
+* { -webkit-tap-highlight-color: transparent; }
+
+.press,
+.press-icon {
+  /* Includes color props: this shorthand outranks Tailwind's transition-colors
+     on the same element, so hover tints must stay smooth here too. */
+  transition:
+    transform var(--dur-base) var(--ease-spring),
+    color var(--dur-fast) ease,
+    background-color var(--dur-fast) ease,
+    border-color var(--dur-fast) ease,
+    box-shadow var(--dur-base) var(--ease-swift);
+  will-change: transform;
+}
+.press:active      { transform: scale(0.97); transition-duration: 60ms; }
+.press-icon:active { transform: scale(0.88); transition-duration: 60ms; }
+@media (prefers-reduced-motion: reduce) {
+  .press:active, .press-icon:active { transform: none; }
+}
+
+/* Inputs: smooth focus transitions everywhere a Tailwind transition class
+   isn't already present (element selector loses to any utility class). */
+input, textarea, select {
+  transition:
+    border-color var(--dur-base) var(--ease-swift),
+    box-shadow var(--dur-base) var(--ease-swift),
+    background-color var(--dur-base) var(--ease-swift);
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   NEXUS COMPONENT LAYER
+   The handful of shapes every screen is built from. They live in
+   `@layer components`, so a utility on the same element still wins — a page
+   can say `panel p-0` without fighting specificity.
+   ══════════════════════════════════════════════════════════════════════════ */
+@layer components {
+  /* The one container. A hairline defines it; nothing floats unless it
+     actually floats over something. */
+  .panel { @apply rounded-xl border border-line bg-surface; }
+  .panel-head { @apply flex min-h-[48px] items-center justify-between gap-3 border-b border-line px-4 py-2.5; }
+  .panel-title { @apply text-[13px] font-semibold text-ink; }
+
+  /* Small uppercase label above a group — the product's section voice. */
+  .eyebrow { @apply text-2xs font-semibold uppercase tracking-[0.08em] text-ink-3; }
+
+  /* ── Buttons ── one family, four weights. */
+  .btn {
+    @apply inline-flex h-9 shrink-0 select-none items-center justify-center gap-1.5 whitespace-nowrap rounded-lg px-3.5
+           text-[13px] font-semibold outline-none transition-[background-color,border-color,color,box-shadow,transform]
+           duration-fast ease-out focus-visible:ring-[3px] focus-visible:ring-brand/25
+           active:scale-[0.98] disabled:pointer-events-none disabled:opacity-50;
+  }
+  :where(.btn) svg { @apply h-4 w-4 shrink-0; }
+  .btn-primary { @apply bg-brand text-brand-fg shadow-brand hover:bg-brand-strong; }
+  .btn-secondary { @apply border border-line bg-surface text-ink hover:border-line-strong hover:bg-raised; }
+  .btn-ghost { @apply text-ink-2 hover:bg-raised hover:text-ink; }
+  .btn-danger { @apply border border-red-200 bg-surface text-red-600 hover:bg-red-50 dark:border-red-500/30 dark:text-red-400 dark:hover:bg-red-500/10; }
+  .btn-sm { @apply h-8 gap-1 px-2.5 text-xs; }
+  .btn-lg { @apply h-10 px-4 text-sm; }
+  .btn-icon { @apply h-9 w-9 px-0; }
+  .btn-icon.btn-sm { @apply h-8 w-8; }
+
+  /* ── Form fields ── */
+  .field {
+    @apply h-9 w-full min-w-0 rounded-lg border border-line bg-surface px-3 text-[13px] text-ink outline-none
+           transition-[border-color,box-shadow] duration-fast placeholder:text-ink-4
+           hover:border-line-strong focus:border-brand focus:ring-[3px] focus:ring-brand/15
+           disabled:cursor-not-allowed disabled:opacity-60;
+  }
+  textarea.field { @apply h-auto py-2 leading-relaxed; }
+  .field-sm { @apply h-8 text-xs; }
+  .label { @apply mb-1.5 block text-xs font-medium text-ink-2; }
+  .hint { @apply mt-1 text-2xs leading-4 text-ink-3; }
+
+  /* ── Chips: status and metadata, never decoration. ── */
+  .chip { @apply inline-flex h-5 shrink-0 items-center gap-1 whitespace-nowrap rounded-md px-1.5 text-2xs font-semibold leading-none; }
+  .chip-neutral { @apply bg-raised text-ink-2 ring-1 ring-inset ring-line; }
+  .chip-brand   { @apply bg-brand/10 text-brand; }
+  .chip-warn    { @apply bg-amber-500/12 text-amber-700 dark:text-amber-300; }
+  .chip-danger  { @apply bg-red-500/10 text-red-600 dark:text-red-400; }
+  .chip-info    { @apply bg-blue-500/10 text-blue-700 dark:text-blue-300; }
+  .chip-violet  { @apply bg-violet-500/10 text-violet-700 dark:text-violet-300; }
+
+  /* ── Segmented control (tabs that switch a view in place). ── */
+  .seg { @apply inline-flex items-center gap-0.5 rounded-lg bg-raised p-0.5 ring-1 ring-inset ring-line; }
+  .seg-item {
+    @apply relative inline-flex h-7 items-center justify-center gap-1.5 whitespace-nowrap rounded-md px-2.5 text-xs font-medium
+           text-ink-3 transition-colors duration-fast hover:text-ink;
+  }
+  .seg-item[data-active="true"] { @apply bg-surface text-ink shadow-soft ring-1 ring-line; }
+
+  /* ── Interactive rows and cards ── */
+  .row-hover { @apply transition-colors duration-fast hover:bg-raised; }
+  .lift {
+    transition: transform var(--dur-base) var(--ease-out), box-shadow var(--dur-base) var(--ease-out),
+                border-color var(--dur-fast) ease, background-color var(--dur-fast) ease;
+  }
+  .lift:hover { transform: translateY(-1px); border-color: rgb(var(--line-strong)); box-shadow: 0 6px 20px -10px rgb(10 16 12 / 0.18); }
+  .lift:active { transform: translateY(0) scale(0.995); }
+
+  .kbd { @apply inline-flex h-5 min-w-[20px] items-center justify-center rounded border border-line bg-surface px-1 font-mono text-[10px] font-medium text-ink-3; }
+
+  /* Live indicator: a dot with a slow expanding ring. */
+  .live-dot { @apply relative inline-flex h-2 w-2 shrink-0 rounded-full bg-brand; }
+  .live-dot::after {
+    content: ''; position: absolute; inset: 0; border-radius: inherit; background: inherit;
+    animation: nxPing 2.4s var(--ease-out) infinite;
+  }
+}
+
+@keyframes nxPing {
+  0%   { transform: scale(1);   opacity: 0.55; }
+  80%, 100% { transform: scale(2.6); opacity: 0; }
+}
+
+/* ─── Motion utilities ───────────────────────────────────────────────────── */
+@keyframes nxEnter {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes nxPop {
+  from { opacity: 0; transform: translateY(4px) scale(0.98); }
+  to   { opacity: 1; transform: none; }
+}
+@keyframes nxDraw { from { stroke-dashoffset: 1; } to { stroke-dashoffset: 0; } }
+@keyframes nxGrowX { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+@keyframes nxGrowY { from { transform: scaleY(0); } to { transform: scaleY(1); } }
+
+.enter { animation: nxEnter var(--dur-slow) var(--ease-out) both; }
+.pop-enter { animation: nxPop var(--dur-base) var(--ease-out) both; }
+
+/* Children arrive in sequence — fast enough (35ms apart) that it reads as one
+   motion, not a queue. Beyond the twelfth the delay stops growing. */
+.stagger > * { animation: nxEnter var(--dur-slow) var(--ease-out) both; }
+.stagger > :nth-child(2)  { animation-delay: 35ms; }
+.stagger > :nth-child(3)  { animation-delay: 70ms; }
+.stagger > :nth-child(4)  { animation-delay: 105ms; }
+.stagger > :nth-child(5)  { animation-delay: 140ms; }
+.stagger > :nth-child(6)  { animation-delay: 175ms; }
+.stagger > :nth-child(7)  { animation-delay: 210ms; }
+.stagger > :nth-child(8)  { animation-delay: 245ms; }
+.stagger > :nth-child(9)  { animation-delay: 280ms; }
+.stagger > :nth-child(10) { animation-delay: 315ms; }
+.stagger > :nth-child(11) { animation-delay: 350ms; }
+.stagger > :nth-child(n+12) { animation-delay: 385ms; }
+
+/* Bars and meters build from their origin on first paint. */
+.grow-x { transform-origin: left; animation: nxGrowX 0.7s var(--ease-out) both; }
+html[dir="rtl"] .grow-x { transform-origin: right; }
+.grow-y { transform-origin: bottom; animation: nxGrowY 0.7s var(--ease-out) both; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    animation-delay: 0ms !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ─── Conversation canvas ─────────────────────────────────────────────────
+   A faint doodle texture behind messages: the cue that says "this is a chat"
+   to anyone who has used WhatsApp, drawn in the ink colour at low opacity so it
+   recedes behind the bubbles in both themes. */
+.chat-doodle {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='360' height='360' viewBox='0 0 360 360'%3E%3Cg fill='none' stroke='%23111714' stroke-width='1.1' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='40' cy='42' r='5'/%3E%3Cpath d='M98 70q14-18 28 0t28 0'/%3E%3Crect x='196' y='34' width='36' height='26' rx='5'/%3E%3Cpath d='M282 56l9-14 9 14z'/%3E%3Cpath d='M30 140q18-9 36 0t36 0'/%3E%3Ccircle cx='182' cy='146' r='9'/%3E%3Cpath d='M254 128l26 26M280 128l-26 26'/%3E%3Cpath d='M52 220q22-22 44 0t44 0'/%3E%3Crect x='186' y='204' width='22' height='22' rx='4' transform='rotate(15 197 215)'/%3E%3Ccircle cx='284' cy='220' r='13'/%3E%3Cpath d='M26 296l18-9 18 9 18-9 18 9'/%3E%3Ccircle cx='166' cy='310' r='5'/%3E%3Cpath d='M238 296q13 13 26 0t26 0'/%3E%3C/g%3E%3C/svg%3E");
+  background-size: 360px 360px;
+  opacity: 0.05;
+}
+.dark .chat-doodle {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='360' height='360' viewBox='0 0 360 360'%3E%3Cg fill='none' stroke='%23E7ECE9' stroke-width='1.1' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='40' cy='42' r='5'/%3E%3Cpath d='M98 70q14-18 28 0t28 0'/%3E%3Crect x='196' y='34' width='36' height='26' rx='5'/%3E%3Cpath d='M282 56l9-14 9 14z'/%3E%3Cpath d='M30 140q18-9 36 0t36 0'/%3E%3Ccircle cx='182' cy='146' r='9'/%3E%3Cpath d='M254 128l26 26M280 128l-26 26'/%3E%3Cpath d='M52 220q22-22 44 0t44 0'/%3E%3Crect x='186' y='204' width='22' height='22' rx='4' transform='rotate(15 197 215)'/%3E%3Ccircle cx='284' cy='220' r='13'/%3E%3Cpath d='M26 296l18-9 18 9 18-9 18 9'/%3E%3Ccircle cx='166' cy='310' r='5'/%3E%3Cpath d='M238 296q13 13 26 0t26 0'/%3E%3C/g%3E%3C/svg%3E");
+  opacity: 0.035;
+}
+
+/* ─── Range slider ───────────────────────────────────────────────────────── */
+.nx-range { -webkit-appearance: none; appearance: none; height: 20px; background: transparent; cursor: pointer; }
+.nx-range:focus { outline: none; }
+.nx-range::-webkit-slider-runnable-track {
+  height: 4px; border-radius: 9999px;
+  background: linear-gradient(to right, rgb(var(--brand)) var(--range-pct, 50%), rgb(var(--line-strong)) var(--range-pct, 50%));
+}
+html[dir="rtl"] .nx-range::-webkit-slider-runnable-track {
+  background: linear-gradient(to left, rgb(var(--brand)) var(--range-pct, 50%), rgb(var(--line-strong)) var(--range-pct, 50%));
+}
+.nx-range::-webkit-slider-thumb {
+  -webkit-appearance: none; appearance: none; margin-top: -6px; width: 16px; height: 16px; border-radius: 9999px;
+  background: #fff; border: 1px solid rgb(var(--line-strong)); box-shadow: 0 1px 3px rgb(0 0 0 / 0.2);
+  transition: transform var(--dur-fast) var(--ease-out);
+}
+.nx-range:active::-webkit-slider-thumb { transform: scale(1.15); }
+.nx-range:focus-visible::-webkit-slider-thumb { box-shadow: 0 0 0 4px rgb(var(--brand) / 0.25); }
+.nx-range::-moz-range-track { height: 4px; border-radius: 9999px; background: rgb(var(--line-strong)); }
+.nx-range::-moz-range-progress { height: 4px; border-radius: 9999px; background: rgb(var(--brand)); }
+.nx-range::-moz-range-thumb { width: 16px; height: 16px; border-radius: 9999px; background: #fff; border: 1px solid rgb(var(--line-strong)); }

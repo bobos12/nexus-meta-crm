@@ -1,0 +1,1148 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+/// A single isolated business ("tenant") in the shared multi-tenant deployment.
+/// Everything a client owns — users, contacts, conversations, its WhatsApp
+/// session, settings — is stamped with this tenant's id and fenced off by the
+/// Prisma tenant-guard (lib/tenant-context.ts + lib/prisma.ts). One business =
+/// one Tenant; a Tenant may contain one or more Teams as intra-business groups.
+model Tenant {
+  id        String       @id @default(cuid())
+  name      String
+  /// URL/logging-friendly handle, unique across the whole platform.
+  slug      String       @unique
+  status    TenantStatus @default(ACTIVE)
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @default(now()) @updatedAt
+
+  @@index([status])
+}
+
+enum TenantStatus {
+  ACTIVE
+  /// Logins rejected and WhatsApp socket dropped; data is preserved untouched.
+  SUSPENDED
+}
+
+model User {
+  id                String             @id @default(cuid())
+  /// Owning tenant. Null only for the platform-scoped identities (PLATFORM_OWNER
+  /// and the dev superuser), which deliberately live above every tenant.
+  tenantId          String?
+  name              String
+  email             String             @unique
+  password          String
+  role              Role               @default(AGENT)
+  teamId            String?
+  team              Team?              @relation("TeamMembers", fields: [teamId], references: [id])
+  ownedTeam         Team?              @relation("TeamOwner")
+  emailVerifiedAt   DateTime?
+  resetToken        String?
+  resetTokenExpiry  DateTime?
+  refreshTokenId    String?
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @default(now()) @updatedAt
+  conversations     Conversation[]     @relation("AssignedConversations")
+  ownedDeals        Deal[]             @relation("OwnedDeals")
+  assignedTasks     Task[]             @relation("AssignedTasks")
+  internalNotes     InternalNote[]     @relation("InternalNotes")
+  auditLogs         AuditLog[]
+  reactions         MessageReaction[]  @relation("UserReactions")
+  notifications     Notification[]     @relation("UserNotifications")
+  pushSubscriptions PushSubscription[] @relation("UserPushSubscriptions")
+
+  @@index([tenantId])
+}
+
+/// A Web Push subscription for a user's device/browser. One user can have many
+/// (phone + laptop). `endpoint` is globally unique per browser push service.
+model PushSubscription {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation("UserPushSubscriptions", fields: [userId], references: [id], onDelete: Cascade)
+  endpoint  String   @unique
+  p256dh    String
+  auth      String
+  userAgent String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
+
+  @@index([userId])
+}
+
+enum Role {
+  /// Platform operator (you). Lives above every tenant, bypasses the tenant-guard,
+  /// and is the only identity that can create/suspend/impersonate tenants.
+  PLATFORM_OWNER
+  SUPER_ADMIN
+  ADMIN
+  TEAM_LEAD
+  AGENT
+  ANALYST
+  VIEWER
+}
+
+model Team {
+  id            String         @id @default(cuid())
+  tenantId      String?
+  name          String
+  ownerId       String         @unique
+  owner         User           @relation("TeamOwner", fields: [ownerId], references: [id])
+  members       User[]         @relation("TeamMembers")
+  conversations Conversation[]
+  autoAssign    Boolean        @default(false)
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @default(now()) @updatedAt
+
+  @@index([tenantId])
+}
+
+/// Meta's quality signal for a Cloud API number. Drives the messaging limit
+/// tier, and a sustained RED precedes restriction. Mirrored from the
+/// `account_update` webhook — never computed locally.
+enum ChannelQuality {
+  UNKNOWN
+  GREEN
+  YELLOW
+  RED
+}
+
+/// A tenant's WhatsApp Business Cloud API channel: the Meta credentials this
+/// CRM sends with, and the health Meta reports back about the number.
+///
+/// One row per tenant. There is no session or auth state to keep — the Cloud
+/// API is stateless HTTP, which is precisely why a number connected this way
+/// cannot be dropped, re-paired, or banned for being an unofficial client.
+model WhatsAppChannel {
+  id       String                @id @default(cuid())
+  /// One channel per tenant. Unique so a tenant can never hold two.
+  tenantId String?               @unique
+
+  // ── Cloud API configuration ──────────────────────────────────────────────
+  /// Meta's ID for the sending number, and the webhook routing key: an inbound
+  /// payload identifies its destination by this alone, so it must be unique
+  /// across the whole platform or deliveries land in the wrong tenant.
+  phoneNumberId      String? @unique
+  /// WhatsApp Business Account ID — the parent of the number, and the object
+  /// message templates are created under.
+  wabaId             String?
+  businessId         String?
+  /// Meta App ID. Only needed to submit templates that carry an image/video/
+  /// document header: those require an upload handle from the Resumable Upload
+  /// API, whose endpoint is namespaced by app. Text-only templates do not need it.
+  appId              String?
+  /// System User access token, AES-256-GCM encrypted at rest. Never returned to
+  /// a client; the API exposes only a masked hint. See lib/crypto.ts.
+  accessTokenEnc     String?
+  /// The tenant's own Meta App secret, encrypted. Needed because under manual
+  /// onboarding each tenant owns their Meta App, so webhook signatures are
+  /// signed with a different secret per tenant. Falls back to META_APP_SECRET
+  /// (the platform app) when null, which is the Embedded Signup case.
+  appSecretEnc       String?
+  /// E.164 number Meta reports for phoneNumberId — what recipients actually see.
+  displayPhoneNumber String?
+  /// The display name Meta approved for the business.
+  verifiedName       String?
+
+  // ── Health, as reported by Meta ──────────────────────────────────────────
+  qualityRating  ChannelQuality @default(UNKNOWN)
+  /// Meta's messaging limit tier (e.g. "TIER_1K"): how many unique customers
+  /// this number may start conversations with per rolling 24h. Null until Meta
+  /// reports one. Read by the broadcast preflight to size a campaign.
+  messagingLimit String?
+  /// Set when Meta reports the number restricted or disabled. Sends are refused
+  /// until it passes.
+  restrictedUntil DateTime?
+
+  /// Last successful credential/health sync against the Graph API.
+  lastSyncedAt  DateTime?
+  /// Why the last sync failed, surfaced in Settings so a tenant can self-serve
+  /// an expired token instead of silently failing to send.
+  lastSyncError String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
+
+}
+
+model Contact {
+  id             String             @id @default(cuid())
+  tenantId       String?
+  teamId         String?
+  phone          String
+  name           String?
+  email          String?
+  company        String?
+  notes          String?
+  status         String             @default("ACTIVE")
+  lifecycleStage String             @default("LEAD")
+  source         String?
+  /// User-defined field values, keyed by CustomFieldDefinition.key.
+  /// Also holds a few reserved system keys (avatarUrl, avatarUrlAt) that are
+  /// never exposed as custom fields — see contacts/custom-fields.service.ts.
+  customFields   Json?
+
+  // ── Marketing consent ───────────────────────────────────────────────────────
+  /// True once the contact asks to stop hearing from us. Set automatically when
+  /// an inbound message matches an opt-out keyword, or by an agent. Broadcast
+  /// audiences exclude these unconditionally — there is no override flag on
+  /// purpose.
+  marketingOptOut   Boolean   @default(false)
+  optOutAt          DateTime?
+  /// How the opt-out happened, for the audit trail ("replied: STOP").
+  optOutReason      String?
+  /// When permission to send marketing was recorded, and where it came from
+  /// ("inbound_message" | "import" | "manual" | "form"). A contact who has
+  /// written to us has implied consent; one bulk-imported from a list has none,
+  /// and the risk engine scores those audiences very differently.
+  consentAt         DateTime?
+  consentSource     String?
+
+  createdAt      DateTime           @default(now())
+  updatedAt      DateTime           @default(now()) @updatedAt
+  conversations  Conversation[]
+  deals          Deal[]
+  tasks          Task[]
+  contactTags    ContactTag[]
+  // ── AI Lead Qualification & Sales Intelligence ──────────────────────────────
+  qualification  LeadQualification?
+  notifications  Notification[]
+
+  /// Phone is unique *within* a tenant now — two different businesses may each
+  /// have the same customer number. (Was globally @unique.)
+  @@unique([tenantId, phone])
+  @@index([tenantId])
+  @@index([teamId])
+  @@index([phone])
+}
+
+/// The set of value types a user-defined contact field can take. Adding a member
+/// here requires a matching branch in `coerceCustomFieldValue`
+/// (contacts/custom-fields.service.ts) and a matching input in the frontend's
+/// `CustomFieldInput` component — there is no generic fallback on purpose, so a
+/// new type cannot silently store unvalidated data.
+enum CustomFieldType {
+  TEXT
+  NUMBER
+  EMAIL
+  PHONE
+  DATE
+  SELECT
+  MULTI_SELECT
+  CHECKBOX
+  URL
+  CURRENCY
+  NOTES
+}
+
+/// A user-defined contact field. Values live in `Contact.customFields` keyed by
+/// `key`, so adding a field costs no migration and reading a contact costs no
+/// join. `key` is immutable once created — renaming it would orphan every
+/// stored value.
+model CustomFieldDefinition {
+  id           String          @id @default(cuid())
+  tenantId     String?
+  teamId       String?
+  key          String
+  label        String
+  type         CustomFieldType @default(TEXT)
+  /// SELECT / MULTI_SELECT choices: [{ value, label, color? }]
+  options      Json?
+  required     Boolean         @default(false)
+  defaultValue Json?
+  placeholder  String?
+  helpText     String?
+  /// ISO-4217 code for CURRENCY fields (e.g. "USD", "EGP").
+  currency     String?
+  /// Ascending display order across every surface that renders custom fields.
+  order        Int             @default(0)
+  /// Soft-disable: hidden from forms but stored values are preserved.
+  isActive     Boolean         @default(true)
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @default(now()) @updatedAt
+
+  @@unique([teamId, key])
+  @@index([tenantId])
+  @@index([teamId, order])
+}
+
+// Relational tags — replaces the CSV `tag` field on Contact
+model Tag {
+  id        String       @id @default(cuid())
+  tenantId  String?
+  teamId    String?
+  name      String
+  color     String       @default("#6366f1")
+  createdAt DateTime     @default(now())
+  contacts  ContactTag[]
+
+  @@unique([teamId, name])
+  @@index([tenantId])
+  @@index([teamId])
+}
+
+model ContactTag {
+  contactId String
+  tagId     String
+  contact   Contact  @relation(fields: [contactId], references: [id], onDelete: Cascade)
+  tag       Tag      @relation(fields: [tagId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@id([contactId, tagId])
+}
+
+model Conversation {
+  id                 String         @id @default(cuid())
+  tenantId           String?
+  teamId             String?
+  contactId          String
+  contact            Contact        @relation(fields: [contactId], references: [id])
+  status             ConvStatus     @default(OPEN)
+  priority           Priority       @default(NORMAL)
+  assignedTo         String?
+  assignedUser       User?          @relation("AssignedConversations", fields: [assignedTo], references: [id])
+  assignedTeamId     String?
+  assignedTeam       Team?          @relation(fields: [assignedTeamId], references: [id])
+  pipeline           String?
+  lastMessage        String?
+  lastMessagePreview String?
+  lastMessageAt      DateTime?
+  /// ── Phase A (normalized-message refactor) — when did the customer last write us?
+  /// Used to evaluate Meta's 24h session window, gate free-form sends, and
+  /// pre-compute template eligibility. Backfilled from Message aggregate
+  /// at migration time.
+  lastInboundAt      DateTime?
+  /// ── Phase A — per-conversation compatibility mode for outbound sends.
+  /// Null = derive from provider's default. See packages/messaging-schema
+  /// (CompatibilityMode): 'cloud_api' | 'web_compatible' | 'mobile_safe' | 'fallback_text'.
+  compatibilityMode  String?
+  notes              String?
+  unreadCount        Int            @default(0)
+  isPinned           Boolean        @default(false)
+  snoozedUntil       DateTime?
+  createdAt          DateTime       @default(now())
+  updatedAt          DateTime       @default(now()) @updatedAt
+  messages           Message[]
+  internalNotes      InternalNote[]
+  tasks              Task[]         @relation("ConversationTasks")
+
+  // ── Sprint 3: Group chat support ─────────────────────────────────────────────
+  /// True when this conversation maps to a WhatsApp group (key.remoteJid ends @g.us).
+  isGroup          Boolean @default(false)
+  /// Full group JID, e.g. "120363...@g.us". Null for 1-to-1 conversations.
+  groupJid         String?
+  /// WhatsApp group subject (display name).
+  groupName        String?
+  /// Last known participant count for the group.
+  participantCount Int?
+
+  // ── Sprint 5: AI Chatbot ──────────────────────────────────────────────────────
+  /// Legacy per-conversation flag (kept for backward-compat; superseded by botOverride).
+  botEnabled     Boolean   @default(false)
+  /// Per-conversation override of the global bot scope:
+  /// null = follow the global setting, true = always reply, false = never reply.
+  botOverride    Boolean?
+  /// When set, the bot is paused until this timestamp (human agent took over).
+  botPausedUntil DateTime?
+
+  @@index([tenantId])
+  @@index([teamId, status, lastMessageAt(sort: Desc)])
+  @@index([contactId, status])
+  @@index([assignedTo])
+  @@index([snoozedUntil])
+  @@index([groupJid])
+}
+
+enum ConvStatus {
+  OPEN
+  RESOLVED
+  PENDING
+  ON_HOLD
+  ARCHIVED
+  SPAM
+}
+
+enum Priority {
+  LOW
+  NORMAL
+  HIGH
+  URGENT
+}
+
+model Message {
+  id             String            @id @default(cuid())
+  tenantId       String?
+  externalId     String
+  sessionId      String
+  direction      MessageDirection
+  from           String
+  to             String
+  phone          String
+  conversationId String
+  conversation   Conversation      @relation(fields: [conversationId], references: [id])
+  fromMe         Boolean
+  body           String
+  type           MessageType       @default(TEXT)
+  mediaUrl       String?
+  mediaMimeType  String?
+  mediaFileName  String?
+  mediaCaption   String?
+  mediaDuration  Int?
+  timestamp      DateTime
+  status         MsgStatus         @default(SENT)
+  errorReason    String?
+  deliveredAt    DateTime?
+  readAt         DateTime?
+  retryCount     Int               @default(0)
+  replyToId      String?
+  replyToBody    String?
+  reactions      MessageReaction[]
+
+  // ── Phase A (normalized-message refactor) — additive columns ────────────────
+  // Existing rows have schemaVersion=0 and continue to be read via legacy
+  // columns above. Rows produced by the new pipeline have schemaVersion=1,
+  // and the renderer reads them via `renderable`. See ENGINEERING.md
+  // and NORMALIZED_MESSAGE_DESIGN.md.
+  /// 0 = legacy row, 1 = normalized (new pipeline).
+  schemaVersion  Int     @default(0)
+  /// Caller-issued idempotency key. (clientId, conversationId) is unique.
+  /// Required for new outbound flows; backend generates one if absent.
+  clientId       String?
+  /// Which transport produced or delivers this message — see packages/messaging-schema (ProviderName).
+  provider       String?
+  /// Semantic message kind — see packages/messaging-schema (MessageKind).
+  kind           String?
+  /// Discriminated MessageContent payload.
+  content        Json?
+  /// Cross-cutting MessageMetadata (sequenceNumber, traceId, origin, ...).
+  metadata       Json?
+  /// Provider raw payload, server-side only. Stripped before the wire.
+  raw            Json?
+  /// Pre-compiled RenderablePayload — what the renderer draws. Stored to
+  /// guarantee preview = chat parity and avoid recompiling on every read.
+  renderable     Json?
+  /// Global monotonic counter for ordering + gap detection in the realtime store.
+  sequenceNumber BigInt  @default(autoincrement())
+
+  /// Legacy interactive-message payload added directly via raw SQL before the
+  /// Phase A refactor. Holds 18 rows of structured interactive data (buttons,
+  /// image headers, etc.). Preserved here so Prisma round-trips the column;
+  /// Phase D migration will fold this data into `content` / `renderable` and
+  /// then drop this column.
+  interactivePayload Json?
+
+  // ── Sprint 3: Group chat sender attribution ──────────────────────────────────
+  /// For group messages: the E.164 phone of the individual participant who sent this.
+  senderPhone String?
+  /// For group messages: the WhatsApp display name (pushName) of the sender.
+  senderName  String?
+
+  // ── Cloud API billing (from the `statuses` webhook) ──────────────────────────
+  // Meta bills per 24h *conversation*, not per message, and only the message
+  // that opens one is charged. Recording what Meta actually billed is the only
+  // way to reconcile a WhatsApp invoice or price a customer plan — and it can
+  // never be backfilled, because the webhook is the sole source.
+  /// Meta's conversation ID this message was billed under.
+  metaConversationId String?
+  /// MARKETING | UTILITY | AUTHENTICATION | SERVICE — the billing category.
+  metaPricingCategory String?
+  /// True when Meta charged for opening a conversation with this message.
+  metaBillable        Boolean?
+
+  @@unique([externalId, sessionId])
+  @@unique([clientId, conversationId])
+  @@index([tenantId])
+  @@index([conversationId, timestamp(sort: Desc)])
+  @@index([conversationId, sequenceNumber(sort: Desc)])
+  @@index([phone])
+}
+
+model MessageReaction {
+  id           String   @id @default(cuid())
+  tenantId     String?
+  messageId    String
+  message      Message  @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  userId       String?
+  user         User?    @relation("UserReactions", fields: [userId], references: [id], onDelete: Cascade)
+  contactPhone String?
+  emoji        String
+  createdAt    DateTime @default(now())
+
+  @@unique([messageId, userId])
+  @@index([tenantId])
+  @@index([messageId])
+  @@index([messageId, contactPhone])
+}
+
+enum MessageType {
+  TEXT
+  IMAGE
+  DOCUMENT
+  AUDIO
+  VIDEO
+  INTERACTIVE
+}
+
+enum MessageDirection {
+  INBOUND
+  OUTBOUND
+}
+
+enum MsgStatus {
+  RECEIVED
+  PROCESSED
+  SENT
+  DELIVERED
+  READ
+  FAILED
+  // ── Phase A additions (normalized-message refactor) ────────────────────────
+  // These map 1:1 to packages/messaging-schema (MessageStatus). The legacy
+  // SENT value remains for back-compat; new pipeline rows transition through
+  // QUEUED → SENDING → PROVIDER_ACCEPTED → SERVER_CONFIRMED → DELIVERED → READ.
+  QUEUED
+  SENDING
+  PROVIDER_ACCEPTED
+  SERVER_CONFIRMED
+  EXPIRED
+}
+
+model InternalNote {
+  id             String       @id @default(cuid())
+  tenantId       String?
+  conversationId String
+  conversation   Conversation @relation(fields: [conversationId], references: [id])
+  authorId       String
+  author         User         @relation("InternalNotes", fields: [authorId], references: [id])
+  body           String
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @default(now()) @updatedAt
+
+  @@index([tenantId])
+}
+
+model AutomationRule {
+  id        String      @id @default(cuid())
+  tenantId  String?
+  teamId    String?
+  name      String
+  trigger   TriggerType
+  keyword   String?
+  response  String
+  isActive  Boolean     @default(true)
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @default(now()) @updatedAt
+
+  @@index([tenantId])
+}
+
+// ── Multi-step automation flows ───────────────────────────────────────────────
+
+model AutomationFlow {
+  id          String                    @id @default(cuid())
+  tenantId    String?
+  teamId      String?
+  name        String
+  trigger     TriggerType
+  keyword     String?
+  isActive    Boolean                   @default(true)
+  stopOnReply Boolean                   @default(true)
+  steps       AutomationFlowStep[]
+  executions  AutomationFlowExecution[]
+  createdAt   DateTime                  @default(now())
+  updatedAt   DateTime                  @default(now()) @updatedAt
+
+  @@index([tenantId])
+  @@index([teamId, isActive])
+}
+
+model AutomationFlowStep {
+  id      String         @id @default(cuid())
+  flowId  String
+  flow    AutomationFlow @relation(fields: [flowId], references: [id], onDelete: Cascade)
+  order   Int
+  type    FlowStepType
+  message String?
+  delayMs Int? // milliseconds to wait before this step (for WAIT steps)
+
+  @@index([flowId, order])
+}
+
+enum FlowStepType {
+  SEND_MESSAGE
+  WAIT
+}
+
+model AutomationFlowExecution {
+  id            String         @id @default(cuid())
+  tenantId      String?
+  flowId        String
+  flow          AutomationFlow @relation(fields: [flowId], references: [id], onDelete: Cascade)
+  phone         String
+  currentStep   Int            @default(0)
+  status        String         @default("RUNNING") // RUNNING | COMPLETED | STOPPED
+  startedAt     DateTime       @default(now())
+  stoppedAt     DateTime?
+  stoppedReason String?
+
+  @@index([tenantId])
+  @@index([flowId, phone, status])
+  @@index([phone, status])
+}
+
+enum TriggerType {
+  KEYWORD
+  FIRST_MESSAGE
+  ANY_MESSAGE
+  OUTSIDE_HOURS
+  REGEX
+  CONTAINS_URL
+  CONTAINS_PHONE
+  SENTIMENT_NEGATIVE
+  NO_RESPONSE_TIME
+  TAG_ADDED
+  STATUS_CHANGE
+  TIME_BASED
+  DAY_OF_WEEK
+  WEBHOOK
+  API_CALL
+}
+
+model Broadcast {
+  id                   String               @id @default(cuid())
+  tenantId             String?
+  teamId               String?
+  name                 String
+  description          String?
+  message              String
+  interactiveContent   Json?
+  /// Storage-relative media reference (e.g. "/uploads/ab12.jpg"), never an
+  /// absolute URL — see lib/media.ts. Absolute URLs stored by older builds are
+  /// normalized on read so a host/port change can't orphan the attachment.
+  mediaUrl             String?
+  mediaType            String?
+  mediaFilename        String?
+  mediaMimeType        String?
+  status               BroadcastStatus      @default(DRAFT)
+  type                 BroadcastType        @default(IMMEDIATE)
+  /// The absolute instant the broadcast fires (UTC). Never a wall-clock string.
+  scheduledAt          DateTime?
+  recurringCron        String?
+  /// IANA zone the user picked the wall-clock time in (e.g. "Africa/Cairo").
+  /// Used only to render `scheduledAt` back as the exact time they chose.
+  timezone             String               @default("UTC")
+  sentAt               DateTime?
+  /// Set when the scheduler claims the row, so a crashed run can be detected.
+  queuedAt             DateTime?
+  lastError            String?
+  totalSent            Int                  @default(0)
+  totalFailed          Int                  @default(0)
+  /// Smart Sending: deliver the audience in batches with a wait between each,
+  /// instead of one blast. Off by default; a small audience that fits in one
+  /// batch behaves exactly like an ordinary send.
+  smartSending         Boolean              @default(false)
+  /// Contacts per batch. Null unless smart sending is on.
+  batchSize            Int?
+  /// Minutes to wait between batches. Null unless smart sending is on.
+  batchIntervalMinutes Int?
+  /// When the next batch is due (UTC). This is the ONE piece of state that must
+  /// survive a restart for a paused-between-batches campaign to resume — the
+  /// scheduler polls it exactly like `scheduledAt`. Null while a batch is
+  /// actively sending or the campaign is finished.
+  nextBatchAt          DateTime?
+
+  // ── Deliverability & account-safety (see broadcasts/safety/*) ───────────────
+  /// Pre-flight risk score 0–100. Higher is riskier. Written by the risk engine
+  /// every time the campaign is saved or sent, so the list view can warn before
+  /// the user opens anything.
+  riskScore            Int?
+  /// LOW | MODERATE | HIGH | CRITICAL — the bucket `riskScore` fell into.
+  riskLevel            String?
+  /// Snapshot of the full pre-flight report at the moment of the last send, so a
+  /// post-mortem can show what we knew and what we advised.
+  preflight            Json?
+  /// CAREFUL | BALANCED | STEADY. Picks the throughput envelope and the shape of
+  /// the inter-message delay distribution. Defaults to BALANCED; the risk engine
+  /// downgrades it automatically when account health is poor.
+  pacingProfile        String               @default("BALANCED")
+  /// Hard ceiling on messages/hour for this campaign, derived from account health
+  /// and warm-up age at claim time. Null means "use the profile default".
+  throttlePerHour      Int?
+  /// Never deliver inside the recipient's local night. On by default — a 3 a.m.
+  /// marketing message is the fastest route to a block-and-report.
+  quietHoursEnabled    Boolean              @default(true)
+  /// Local hours (0–23) bounding the do-not-disturb window. Start > end wraps
+  /// midnight, which is the normal case (21:00 → 09:00).
+  quietHoursStart      Int                  @default(21)
+  quietHoursEnd        Int                  @default(9)
+  /// Stable fingerprint of the message body + media, used to detect a campaign
+  /// that re-sends the same content to an overlapping audience.
+  contentHash          String?
+  /// Set when the circuit breaker auto-paused the run (WhatsApp started refusing
+  /// sends). Distinguishes a machine pause from a user pause in the UI.
+  healthPausedAt       DateTime?
+  healthPauseReason    String?
+  /// Expanded message variations. Sending a byte-identical body to thousands of
+  /// numbers is one of the strongest spam fingerprints there is; the worker
+  /// rotates through these instead.
+  variants             Json?
+  /// Progressive rollout: deliver this many recipients, then hold and re-check
+  /// account health before releasing the rest. Null disables the pilot phase.
+  pilotSize            Int?
+  pilotCompletedAt     DateTime?
+  /// Set once the user has seen and accepted the pre-flight report for the
+  /// current `contentHash` + audience. Cleared on every edit.
+  reviewedAt           DateTime?
+
+  // ── Cloud API delivery ─────────────────────────────────────────────────────
+  /// The approved Meta template this campaign sends. Required on Cloud API for
+  /// any recipient outside their 24h window — which, for a broadcast, is nearly
+  /// all of them. Null on Baileys, where free-form `message` is sent directly.
+  templateId           String?
+  template             MessageTemplate?     @relation(fields: [templateId], references: [id])
+  /// Contact-field mapping for the template's placeholders, resolved per
+  /// recipient at send time. Keyed by the variable's NAME as it appears in
+  /// `MessageTemplate.variables` — e.g. {"first_name":"name","ref":"custom.orderId"}
+  /// — NOT by the positional index. The worker reads it as
+  /// `vars[mapping[name] ?? name]`, so an unmapped variable falls back to the
+  /// personalization token of the same name. See broadcasts/personalization.ts.
+  templateVariables    Json?
+
+  createdAt            DateTime             @default(now())
+  updatedAt            DateTime             @default(now()) @updatedAt
+  recipients           BroadcastRecipient[]
+
+  /// Drives the scheduler's due-broadcast poll.
+  @@index([status, scheduledAt])
+  /// Drives the scheduler's due-batch poll (smart sending continuations).
+  @@index([status, nextBatchAt])
+  @@index([tenantId])
+  /// Duplicate-campaign detection looks up recent sends of the same content.
+  @@index([tenantId, contentHash])
+}
+
+enum BroadcastStatus {
+  DRAFT
+  SCHEDULED
+  SENDING
+  PAUSED
+  SENT
+  FAILED
+  /// Stopped by the user mid-campaign. Already-sent messages stay sent; no
+  /// further batches go out. Distinct from FAILED (which is a delivery problem).
+  CANCELLED
+}
+
+enum BroadcastType {
+  IMMEDIATE
+  SCHEDULED
+  RECURRING
+}
+
+enum TemplateType {
+  TEXT
+  MEDIA
+  INTERACTIVE
+}
+
+enum TemplateStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+model BroadcastRecipient {
+  id          String    @id @default(cuid())
+  tenantId    String?
+  broadcastId String
+  broadcast   Broadcast @relation(fields: [broadcastId], references: [id])
+  /// Always E.164. Normalizing at audience-resolution time is what stops the
+  /// same human being messaged twice in one campaign because they were stored
+  /// once as "+971501234567" and once as "0501234567".
+  phone       String
+  /// pending | sent | failed | skipped
+  status      String    @default("pending")
+
+  // ── Delivery forensics ─────────────────────────────────────────────────────
+  /// Resolved at audience time so the worker never has to look a contact up.
+  contactId   String?
+  /// Quality tier at send time (HOT | WARM | COOL | COLD). Drives send ORDER:
+  /// engaged contacts go first, so if a run has to stop early it stopped on the
+  /// safest possible slice.
+  tier        String?
+  /// Materialized delivery position, written once when the audience is built.
+  /// The ordering is by tier then quality score, which cannot be expressed as a
+  /// Prisma `orderBy` over a String column — and re-sorting in memory would mean
+  /// loading every recipient row on every batch.
+  sortOrder   Int       @default(0)
+  /// Which message variant this recipient received.
+  variantIndex Int      @default(0)
+  attempts    Int       @default(0)
+  /// WhatsApp/transport error class — 463 (cold reachout), 403 (blocked),
+  /// NOT_ON_WHATSAPP, DISCONNECTED, … The circuit breaker reads these.
+  errorCode   String?
+  lastError   String?
+  /// Why this recipient was never attempted: SUPPRESSED, OPTED_OUT, COOLDOWN,
+  /// INVALID_PHONE, DUPLICATE, QUOTA. A skip is not a failure and must never be
+  /// counted as one.
+  skipReason  String?
+  sentAt      DateTime?
+  deliveredAt DateTime?
+  readAt      DateTime?
+  /// The customer wrote back after receiving this. The single best signal that a
+  /// campaign was welcome rather than spam.
+  repliedAt   DateTime?
+  /// CRM Message row created by the send, so receipts can be reconciled.
+  messageId   String?
+
+  @@index([broadcastId, status])
+  @@index([tenantId])
+  /// Cooldown lookups: "did this phone get a broadcast in the last N hours?"
+  @@index([tenantId, phone, sentAt])
+  @@index([messageId])
+  /// The worker's hot path: next N pending recipients in delivery order.
+  @@index([broadcastId, status, sortOrder])
+}
+
+/// ─── Suppression list ────────────────────────────────────────────────────────
+///
+/// The one table every broadcast is filtered against, unconditionally. It lives
+/// at the phone level rather than on Contact so it survives a contact being
+/// deleted and re-imported — which is exactly how an opt-out normally gets lost.
+///
+/// Hard reasons (OPTED_OUT, COMPLAINT, BLOCKED_US) never expire. Soft reasons
+/// (NOT_ON_WHATSAPP, HARD_FAIL) carry an `expiresAt` so a number that was
+/// temporarily unreachable is retried weeks later instead of being blacklisted
+/// forever.
+model SuppressionEntry {
+  id        String    @id @default(cuid())
+  tenantId  String?
+  phone     String
+  /// OPTED_OUT | COMPLAINT | BLOCKED_US | NOT_ON_WHATSAPP | HARD_FAIL | MANUAL
+  reason    String
+  /// Free text shown to the operator ("replied STOP on 12 Mar").
+  detail    String?
+  /// inbound_keyword | send_error | manual | import
+  source    String?
+  expiresAt DateTime?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @default(now()) @updatedAt
+
+  @@unique([tenantId, phone])
+  @@index([tenantId])
+  @@index([tenantId, expiresAt])
+}
+
+/// ─── Daily account-health rollup ─────────────────────────────────────────────
+///
+/// One row per tenant per day. Everything the health score needs is here, so
+/// scoring an account costs one indexed read of ~30 rows instead of aggregating
+/// the Message table. Written incrementally by the broadcast worker and the
+/// inbound pipeline.
+model AccountHealthDay {
+  id                 String   @id @default(cuid())
+  tenantId           String?
+  date               DateTime @db.Date
+  /// Broadcast sends WhatsApp accepted.
+  broadcastSent      Int      @default(0)
+  /// Broadcast sends that errored for any reason.
+  broadcastFailed    Int      @default(0)
+  /// Of those, sends to contacts who have never written to us. The riskiest
+  /// traffic there is, and the numerator of the cold-ratio health signal.
+  coldSent           Int      @default(0)
+  /// WhatsApp refused with 403 — the recipient blocked this number.
+  hardBlocks         Int      @default(0)
+  /// WhatsApp refused with 463 — cold-reachout time lock. The loudest possible
+  /// "you are about to be restricted" signal.
+  coldReachoutBlocks Int      @default(0)
+  /// Recipients who replied within 24h of a broadcast.
+  broadcastReplies   Int      @default(0)
+  /// Contacts who opted out today.
+  optOuts            Int      @default(0)
+
+  @@unique([tenantId, date])
+  @@index([tenantId, date])
+}
+
+model Analytics {
+  id               String   @id @default(cuid())
+  tenantId         String?
+  /// One analytics row per tenant per day (was globally @unique on date).
+  date             DateTime @default(now()) @db.Date
+  totalMessages    Int      @default(0)
+  incomingMessages Int      @default(0)
+  outgoingMessages Int      @default(0)
+  newContacts      Int      @default(0)
+  resolvedConvs    Int      @default(0)
+  automationsFired Int      @default(0)
+
+  @@unique([tenantId, date])
+  @@index([tenantId])
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  tenantId  String?
+  userId    String?
+  user      User?    @relation(fields: [userId], references: [id])
+  action    String
+  resource  String
+  details   Json?
+  createdAt DateTime @default(now())
+
+  @@index([tenantId])
+}
+
+model SavedReply {
+  id        String   @id @default(cuid())
+  tenantId  String?
+  teamId    String?
+  shortcut  String
+  message   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
+
+  @@unique([teamId, shortcut])
+  @@index([tenantId])
+}
+
+model Deal {
+  id        String    @id @default(cuid())
+  tenantId  String?
+  teamId    String?
+  contactId String
+  contact   Contact   @relation(fields: [contactId], references: [id], onDelete: Cascade)
+  title     String
+  stage     DealStage @default(NEW)
+  value     Float     @default(0)
+  ownerId   String?
+  owner     User?     @relation("OwnedDeals", fields: [ownerId], references: [id])
+  notes     String?
+  closedAt  DateTime?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @default(now()) @updatedAt
+
+  @@index([tenantId])
+  @@index([teamId, stage])
+}
+
+enum DealStage {
+  NEW
+  INTERESTED
+  NEGOTIATION
+  CLOSED
+}
+
+model MessageTemplate {
+  id             String         @id @default(cuid())
+  tenantId       String?
+  teamId         String?
+  name           String
+  content        String
+  /// Storage-relative media reference (e.g. "/uploads/ab12.jpg") — see lib/media.ts.
+  mediaUrl       String?
+  /// IMAGE | VIDEO | DOCUMENT | AUDIO. Mirrors `payload.media.type`; kept as a
+  /// column so a template's attachment survives even if `payload` is legacy or
+  /// absent, and so media templates can be queried without parsing JSON.
+  mediaType      String?
+  mediaFilename  String?
+  mediaMimeType  String?
+  type           TemplateType   @default(TEXT)
+  status         TemplateStatus @default(DRAFT)
+  // Meta Cloud API fields
+  language       String         @default("en_US")
+  category       String? // MARKETING | UTILITY | AUTHENTICATION
+  metaStatus     String? // PENDING | APPROVED | REJECTED | PAUSED | DELETED
+  metaTemplateId String? // numeric ID returned by Meta after submission
+  /// Meta's stated reason for a REJECTED template. Shown verbatim in the UI —
+  /// a rejection the tenant cannot read is a support ticket.
+  metaRejectedReason String?
+  /// When the template was last pushed to Meta for review. Distinguishes "never
+  /// submitted" from "submitted and still PENDING", which look identical if you
+  /// only have metaStatus.
+  metaSubmittedAt    DateTime?
+  /// Last time metaStatus was refreshed from the Graph API (webhook or poll).
+  metaSyncedAt       DateTime?
+  /// Meta's post-delivery quality score for the template (GREEN/YELLOW/RED).
+  /// A RED template gets paused by Meta, so this is an early warning.
+  metaQualityScore   String?
+  // Structured JSON payload — components array for Meta templates (header/body/footer/buttons)
+  payload        Json?
+  // Ordered variable names e.g. ["name","order_id"] matching {{1}},{{2}} in body
+  variables      Json?
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @default(now()) @updatedAt
+  broadcasts     Broadcast[]
+
+  @@index([tenantId])
+  @@index([teamId])
+  /// Meta identifies a template by (name, language) within a WABA, so the same
+  /// pair must not exist twice for one tenant or submission and status sync
+  /// become ambiguous.
+  @@unique([tenantId, name, language])
+  @@index([metaStatus])
+}
+
+model Task {
+  id             String        @id @default(cuid())
+  tenantId       String?
+  teamId         String?
+  contactId      String?
+  contact        Contact?      @relation(fields: [contactId], references: [id], onDelete: SetNull)
+  conversationId String?
+  conversation   Conversation? @relation("ConversationTasks", fields: [conversationId], references: [id], onDelete: SetNull)
+  title          String
+  description    String?
+  dueDate        DateTime?
+  status         TaskStatus    @default(OPEN)
+  priority       TaskPriority  @default(MEDIUM)
+  assigneeId     String?
+  assignee       User?         @relation("AssignedTasks", fields: [assigneeId], references: [id])
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @default(now()) @updatedAt
+
+  @@index([tenantId])
+  @@index([teamId, status])
+}
+
+enum TaskStatus {
+  OPEN
+  IN_PROGRESS
+  DONE
+}
+
+enum TaskPriority {
+  LOW
+  MEDIUM
+  HIGH
+}
+
+// ── AI Lead Qualification & Sales Intelligence ────────────────────────────────
+// All AI-derived data lives here. It is advisory-only: it never mutates
+// Conversation.priority/status or Contact.lifecycleStage. Scope is per-Contact,
+// 1-to-1 only (WhatsApp groups are excluded from analysis).
+
+/// Canonical AI status set (reconciled from the product spec). The Lead
+/// Management sidebar sections are filtered views built on top of these.
+enum LeadStatus {
+  NEW_LEAD
+  QUALIFIED
+  HOT
+  WARM
+  COLD
+  CUSTOMER
+  LOST
+  NOT_INTERESTED
+  SPAM
+}
+
+/// One row per qualified Contact — the current AI evaluation. Continuously
+/// upserted as new inbound messages arrive (debounced per contact).
+model LeadQualification {
+  id                     String            @id @default(cuid())
+  tenantId               String?
+  contactId              String            @unique
+  contact                Contact           @relation(fields: [contactId], references: [id], onDelete: Cascade)
+  teamId                 String?
+  status                 LeadStatus        @default(NEW_LEAD)
+  /// 0–100 overall qualification/opportunity score.
+  score                  Int               @default(0)
+  /// Reuses the global Priority enum (LOW | NORMAL | HIGH | URGENT).
+  priority               Priority          @default(NORMAL)
+  /// AI self-reported confidence in this evaluation, 0–1.
+  confidence             Float             @default(0)
+  /// True when the customer needs immediate human attention.
+  needsAttention         Boolean           @default(false)
+  /// True when strong buying intent / purchase readiness is detected.
+  buyingIntent           Boolean           @default(false)
+  /// Structured signal flags: { pricingRequest, meetingRequest, callRequest, urgency, readyToBuy }.
+  signals                Json?
+  /// Bilingual AI free-text — rendered per the viewing agent's UI language.
+  summaryEn              String?
+  summaryAr              String?
+  recommendationEn       String?
+  recommendationAr       String?
+  /// Inbound message count at the time of the last analysis (debounce/dedup aid).
+  messageCountAtAnalysis Int               @default(0)
+  lastAnalyzedAt         DateTime?
+  createdAt              DateTime          @default(now())
+  updatedAt              DateTime          @default(now()) @updatedAt
+  events                 LeadStatusEvent[]
+
+  @@index([tenantId])
+  @@index([teamId, status])
+  @@index([teamId, priority])
+  @@index([teamId, needsAttention])
+  @@index([teamId, score(sort: Desc)])
+}
+
+/// Append-only status history — one row per status change (goal: track changes
+/// in customer status over time as conversations evolve).
+model LeadStatusEvent {
+  id              String            @id @default(cuid())
+  tenantId        String?
+  qualificationId String
+  qualification   LeadQualification @relation(fields: [qualificationId], references: [id], onDelete: Cascade)
+  contactId       String
+  teamId          String?
+  fromStatus      LeadStatus?
+  toStatus        LeadStatus
+  score           Int               @default(0)
+  /// Short bilingual-agnostic reason snapshot (English summary line).
+  reason          String?
+  createdAt       DateTime          @default(now())
+
+  @@index([tenantId])
+  @@index([contactId, createdAt(sort: Desc)])
+  @@index([qualificationId, createdAt(sort: Desc)])
+}
+
+enum NotificationType {
+  BUYING_INTENT
+  NEEDS_ATTENTION
+  STATUS_UPGRADE
+}
+
+/// Persistent per-recipient notifications. Targeting: assigned agent if the
+/// conversation is assigned, otherwise the whole team.
+model Notification {
+  id             String           @id @default(cuid())
+  tenantId       String?
+  recipientId    String
+  recipient      User             @relation("UserNotifications", fields: [recipientId], references: [id], onDelete: Cascade)
+  teamId         String?
+  type           NotificationType
+  priority       Priority         @default(NORMAL)
+  title          String
+  body           String?
+  contactId      String?
+  contact        Contact?         @relation(fields: [contactId], references: [id], onDelete: Cascade)
+  /// Target conversation for the "open conversation" action (plain id, no FK).
+  conversationId String?
+  isRead         Boolean          @default(false)
+  readAt         DateTime?
+  createdAt      DateTime         @default(now())
+
+  @@index([tenantId])
+  @@index([recipientId, isRead, createdAt(sort: Desc)])
+  @@index([recipientId, createdAt(sort: Desc)])
+}
+
+/// Generic key-value settings store. Used for chatbot config and future
+/// per-tenant settings. Keyed by (tenantId, key): each tenant has its own
+/// "chatbot" row. A null tenantId row holds platform-wide/shared config.
+model Setting {
+  id        String   @id @default(cuid())
+  tenantId  String?
+  key       String
+  value     Json
+  updatedAt DateTime @default(now()) @updatedAt
+
+  @@unique([tenantId, key])
+  @@index([tenantId])
+}

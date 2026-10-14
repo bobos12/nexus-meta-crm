@@ -1,0 +1,252 @@
+{
+  "title": "Dashboard",
+  "subtitle": "Overview of your WhatsApp business activity",
+  "greeting": "Welcome back, {{name}}",
+  "tagline": "Plan, prioritize, and accomplish your work with ease.",
+  "newBroadcast": "New Broadcast",
+  "importContacts": "Import Contacts",
+  "reminders": {
+    "title": "Reminders",
+    "headline": "{{count}} chats awaiting your reply",
+    "sub": "Jump back in and keep your customers moving.",
+    "caughtUp": "You're all caught up",
+    "caughtUpSub": "No open conversations need a reply right now.",
+    "action": "Open Inbox"
+  },
+  "kpi": {
+    "totalContacts": "Total Contacts",
+    "totalContactsCaption": "Across your whole audience",
+    "openConversations": "Open Conversations",
+    "openConversationsCaption": "Awaiting your reply",
+    "todayMessages": "Messages Today",
+    "todayMessagesCaption": "Sent & received today",
+    "hotLeads": "Hot Leads",
+    "hotLeadsCaption": "Lead management customers",
+    "newToday": "+{{count}} added today",
+    "noneToday": "None added today",
+    "unread": "{{count}} still unread",
+    "allRead": "Nothing unread",
+    "vsYesterday": "{{sign}}{{percent}}% vs all of yesterday",
+    "vsYesterdayNoBase": "{{count}} today, none yesterday",
+    "sameAsYesterday": "Same as all of yesterday",
+    "noMessagesToday": "No messages yet today",
+    "hotToday": "+{{count}} turned hot today",
+    "noHotToday": "No new hot leads today"
+  },
+  "analytics": {
+    "title": "Message Analytics",
+    "subtitle": "Daily message volume over the last 7 days",
+    "noData": "No message activity yet"
+  },
+  "collab": {
+    "title": "Team Collaboration",
+    "subtitle": "Workload and resolution per agent",
+    "manage": "Manage",
+    "empty": "No agent activity yet",
+    "workingOnPrefix": "Working on",
+    "workingOn": "{{open}} open · {{resolved}} resolved",
+    "completed": "Completed",
+    "inProgress": "In Progress",
+    "pending": "Pending"
+  },
+  "progress": {
+    "title": "Resolution Progress",
+    "caption": "Resolved",
+    "resolutionCaption": "Resolution rate",
+    "conversionCaption": "Deal conversion"
+  },
+  "tracker": {
+    "title": "Session Uptime",
+    "live": "Live",
+    "paused": "Paused",
+    "pause": "Pause timer",
+    "resume": "Resume timer",
+    "reset": "Reset timer"
+  },
+  "crmOverview": "CRM overview",
+  "heroTitle": "WhatsApp command center",
+  "heroSubtitle": "Track contacts, conversations, broadcasts, and automations from a single workspace built for operators.",
+  "contactsLabel": "Contacts",
+  "conversationsLabel": "Conversations",
+  "automationLabel": "Automation",
+  "liveStatus": "Live status",
+  "refreshRate": "Refresh",
+  "refreshInterval": "Every minute",
+  "agentPerformance": "Agent Performance",
+  "agentPerformanceSubtitle": "Response time and workload per agent",
+  "agentCol": {
+    "name": "Agent",
+    "open": "Open",
+    "resolved": "Resolved",
+    "avgFirstResponse": "Avg. First Response"
+  },
+  "resolutionRate": "Resolution rate",
+  "closedDeals": "Closed Deals",
+  "whatsappConnected": "WhatsApp Connected",
+  "disconnected": "Disconnected",
+  "pipelineAnalytics": "Pipeline Analytics",
+  "pipelineSub": "Deal funnel and conversion",
+  "totalDeals": "Total Deals",
+  "conversion": "Conversion",
+  "totalValue": "Total Value",
+  "stats": {
+    "openConversations": "Open Conversations",
+    "totalContacts": "Total Contacts",
+    "messagesSent": "Messages Sent",
+    "responseRate": "Response Rate",
+    "avgResponseTime": "Avg. Response Time",
+    "resolvedToday": "Resolved Today",
+    "newContactsToday": "New Contacts Today",
+    "campaignsSent": "Campaigns Sent",
+    "messagesToday": "Messages Today",
+    "automationsFired": "Automations Fired"
+  },
+  "chart": {
+    "title": "Message Activity",
+    "subtitle": "Messages sent and received over the last 7 days",
+    "sent": "Sent",
+    "received": "Received",
+    "noData": "No message data available"
+  },
+  "recentConversations": {
+    "title": "Recent Conversations",
+    "subtitle": "Latest activity in your inbox",
+    "viewAll": "View all",
+    "lastActive": "Last active {{date}}",
+    "noConversations": "No recent conversations",
+    "noMessages": "No messages yet"
+  },
+  "quickActions": {
+    "title": "Quick Actions",
+    "newBroadcast": "New Broadcast",
+    "newContact": "New Contact",
+    "viewTemplates": "View Templates"
+  },
+  "quickNav": {
+    "title": "Quick Access",
+    "open": "Open",
+    "leads": "Leads",
+    "leadsSub": "Track & convert hot leads",
+    "templates": "Templates",
+    "templatesSub": "Ready-made message templates",
+    "tags": "Tags",
+    "tagsSub": "Organize contacts with labels"
+  },
+  "session": {
+    "title": "WhatsApp Session",
+    "connected": "Connected",
+    "connecting": "Connecting",
+    "disconnected": "Disconnected",
+    "disconnectedHint": "Not connected — scan the QR code to reconnect.",
+    "connectingHint": "Connecting to WhatsApp…",
+    "loadingHint": "Loading session…",
+    "todaysMessages": "Today's Messages",
+    "sentSuffix": "sent",
+    "warmupTitle": "Warm-up",
+    "dayOf": "Day {{day}} of 15",
+    "remaining": "{{count}} remaining · resets at midnight",
+    "limitReached": "Daily limit reached · resets at midnight",
+    "unlocks": "Full capacity unlocks {{date}}",
+    "fullCapacity": "Full capacity",
+    "perMinute": "Up to {{count}} / min",
+    "protectNote": "These limits protect your number from WhatsApp bans.",
+    "openInbox": "Open Inbox"
+  },
+  "connection": {
+    "aria": "WhatsApp connection",
+    "connected": "Connected",
+    "copy": "Copy number",
+    "manage": "Manage",
+    "setupTitle": "Connect your WhatsApp",
+    "setupBody": "Enter your number and we'll give you a code to type into WhatsApp.",
+    "moreOptions": "More connection options"
+  },
+  "pipelineEmpty": "No deals yet",
+  "pipelineEmptyCta": "Open the deals board",
+  "today": {
+    "morning": "Good morning, {{name}}",
+    "afternoon": "Good afternoon, {{name}}",
+    "evening": "Good evening, {{name}}",
+    "sendingFrom": "Sending from",
+    "fullCapacity": "Full capacity",
+    "warmup": "Warm-up day {{day}}",
+    "openInbox": "Open inbox",
+    "pulse": {
+      "open": "Open chats",
+      "waiting": "{{count}} waiting on a reply",
+      "allAnswered": "Every chat answered",
+      "messages": "Messages today",
+      "contacts": "Contacts",
+      "newToday": "+{{count}} new today",
+      "noneToday": "No new contacts today",
+      "hot": "Hot leads",
+      "hotToday": "+{{count}} turned hot today",
+      "noHotToday": "None new today",
+      "last7": "Last 7 days"
+    },
+    "queue": {
+      "title": "Waiting on you",
+      "sub": "Open chats, longest wait first",
+      "emptyTitle": "No one is waiting",
+      "emptySub": "Every open chat has a reply. New messages will appear here.",
+      "reply": "Reply",
+      "unassigned": "Unassigned",
+      "waitingFor": "waiting {{time}}",
+      "viewAll": "Open inbox",
+      "more": "+{{count}} more in the inbox"
+    },
+    "leads": {
+      "title": "Hot leads",
+      "sub": "Most likely to buy",
+      "empty": "No hot leads right now",
+      "emptySub": "Leads appear here when the AI spots buying intent.",
+      "viewAll": "All leads"
+    },
+    "activity": {
+      "title": "Message activity",
+      "sub": "Sent and received, last 7 days",
+      "sent": "Sent",
+      "received": "Received",
+      "total": "Total",
+      "empty": "No messages in the last 7 days"
+    },
+    "pipeline": {
+      "title": "Pipeline",
+      "sub": "Deals by stage",
+      "openValue": "Open value",
+      "winRate": "Win rate",
+      "deals": "{{count}} deals",
+      "empty": "No deals yet",
+      "emptySub": "Deals you create from chats will show here.",
+      "cta": "Open deals"
+    },
+    "team": {
+      "title": "Team",
+      "sub": "Workload and speed this period",
+      "agent": "Agent",
+      "open": "Open",
+      "resolved": "Resolved",
+      "resolution": "Resolution",
+      "firstResponse": "First reply",
+      "min": "{{n}} min",
+      "empty": "No agent activity yet",
+      "manage": "Manage team"
+    },
+    "brief": {
+      "waiting_one": "<b>{{count}} customer</b> is waiting for a reply",
+      "waiting_other": "<b>{{count}} customers</b> are waiting for a reply",
+      "none": "Nobody is waiting for a reply",
+      "longest": " — the longest for <w>{{time}}</w>",
+      "hot_one": "<b>{{count}} lead</b> turned hot today",
+      "hot_other": "<b>{{count}} leads</b> turned hot today",
+      "noHot": "no new hot leads yet today",
+      "volume": "<b>{{count}}</b> messages so far today",
+      "and": "and",
+      "sections": {
+        "act": "Act now",
+        "understand": "This week",
+        "team": "Your team"
+      }
+    }
+  }
+}

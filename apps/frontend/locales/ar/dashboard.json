@@ -1,0 +1,252 @@
+{
+  "title": "لوحة التحكم",
+  "subtitle": "نظرة عامة على نشاط واتساب للأعمال",
+  "greeting": "مرحبًا بعودتك، {{name}}",
+  "tagline": "خطّط، ورتّب الأولويات، وأنجز عملك بسهولة.",
+  "newBroadcast": "حملة جديدة",
+  "importContacts": "استيراد جهات الاتصال",
+  "reminders": {
+    "title": "التذكيرات",
+    "headline": "{{count}} محادثة بانتظار ردّك",
+    "sub": "عُد إلى العمل وحافظ على تفاعل عملائك.",
+    "caughtUp": "أنجزت كل شيء",
+    "caughtUpSub": "لا توجد محادثات مفتوحة بحاجة إلى رد الآن.",
+    "action": "فتح الوارد"
+  },
+  "kpi": {
+    "totalContacts": "إجمالي جهات الاتصال",
+    "totalContactsCaption": "عبر جمهورك بالكامل",
+    "openConversations": "المحادثات المفتوحة",
+    "openConversationsCaption": "بانتظار ردّك",
+    "todayMessages": "رسائل اليوم",
+    "todayMessagesCaption": "المُرسَلة والمُستقبَلة اليوم",
+    "hotLeads": "العملاء الساخنين",
+    "hotLeadsCaption": "عملاء إدارة العملاء المحتملين",
+    "newToday": "أُضيف {{count}} اليوم",
+    "noneToday": "لم يُضَف أي جهة اتصال اليوم",
+    "unread": "{{count}} غير مقروءة",
+    "allRead": "لا توجد رسائل غير مقروءة",
+    "vsYesterday": "{{sign}}{{percent}}% مقارنةً بيوم أمس كاملًا",
+    "vsYesterdayNoBase": "{{count}} اليوم، ولا شيء أمس",
+    "sameAsYesterday": "مثل يوم أمس كاملًا",
+    "noMessagesToday": "لا توجد رسائل اليوم بعد",
+    "hotToday": "{{count}} أصبحوا ساخنين اليوم",
+    "noHotToday": "لا يوجد عملاء ساخنون جدد اليوم"
+  },
+  "analytics": {
+    "title": "تحليلات الرسائل",
+    "subtitle": "حجم الرسائل اليومي خلال آخر ٧ أيام",
+    "noData": "لا يوجد نشاط رسائل بعد"
+  },
+  "collab": {
+    "title": "تعاون الفريق",
+    "subtitle": "حجم العمل ومعدل الحل لكل وكيل",
+    "manage": "إدارة",
+    "empty": "لا يوجد نشاط للوكلاء بعد",
+    "workingOnPrefix": "يعمل على",
+    "workingOn": "{{open}} مفتوحة · {{resolved}} محلولة",
+    "completed": "مكتمل",
+    "inProgress": "قيد التنفيذ",
+    "pending": "قيد الانتظار"
+  },
+  "progress": {
+    "title": "تقدّم الحل",
+    "caption": "محلولة",
+    "resolutionCaption": "معدل الحل",
+    "conversionCaption": "تحويل الصفقات"
+  },
+  "tracker": {
+    "title": "مدة الجلسة",
+    "live": "مباشر",
+    "paused": "متوقف",
+    "pause": "إيقاف المؤقت",
+    "resume": "استئناف المؤقت",
+    "reset": "إعادة ضبط المؤقت"
+  },
+  "crmOverview": "نظرة عامة على CRM",
+  "heroTitle": "مركز واتساب",
+  "heroSubtitle": "تتبع جهات الاتصال والمحادثات والحملات والأتمتة من مساحة عمل واحدة.",
+  "contactsLabel": "جهات الاتصال",
+  "conversationsLabel": "المحادثات",
+  "automationLabel": "الأتمتة",
+  "liveStatus": "الحالة المباشرة",
+  "refreshRate": "التحديث",
+  "refreshInterval": "كل دقيقة",
+  "agentPerformance": "أداء الوكلاء",
+  "agentPerformanceSubtitle": "وقت الاستجابة وحجم العمل لكل وكيل",
+  "agentCol": {
+    "name": "الوكيل",
+    "open": "مفتوح",
+    "resolved": "محلول",
+    "avgFirstResponse": "متوسط أول رد"
+  },
+  "resolutionRate": "معدل الحل",
+  "closedDeals": "الصفقات المغلقة",
+  "whatsappConnected": "واتساب متصل",
+  "disconnected": "غير متصل",
+  "pipelineAnalytics": "تحليل المسار",
+  "pipelineSub": "مسار الصفقات والتحويل",
+  "totalDeals": "إجمالي الصفقات",
+  "conversion": "التحويل",
+  "totalValue": "القيمة الإجمالية",
+  "stats": {
+    "openConversations": "المحادثات المفتوحة",
+    "totalContacts": "إجمالي جهات الاتصال",
+    "messagesSent": "الرسائل المُرسَلة",
+    "responseRate": "معدل الاستجابة",
+    "avgResponseTime": "متوسط وقت الاستجابة",
+    "resolvedToday": "تم حله اليوم",
+    "newContactsToday": "جهات اتصال جديدة اليوم",
+    "campaignsSent": "الحملات المُرسَلة",
+    "messagesToday": "رسائل اليوم",
+    "automationsFired": "الأتمتة المُشغَّلة"
+  },
+  "chart": {
+    "title": "نشاط الرسائل",
+    "subtitle": "الرسائل المُرسَلة والمُستقبَلة خلال آخر 7 أيام",
+    "sent": "مُرسَل",
+    "received": "مُستقبَل",
+    "noData": "لا توجد بيانات للرسائل"
+  },
+  "recentConversations": {
+    "title": "المحادثات الأخيرة",
+    "subtitle": "آخر النشاطات في صندوق الوارد",
+    "viewAll": "عرض الكل",
+    "lastActive": "آخر نشاط {{date}}",
+    "noConversations": "لا توجد محادثات حديثة",
+    "noMessages": "لا توجد رسائل بعد"
+  },
+  "quickActions": {
+    "title": "إجراءات سريعة",
+    "newBroadcast": "حملة جديدة",
+    "newContact": "جهة اتصال جديدة",
+    "viewTemplates": "عرض القوالب"
+  },
+  "quickNav": {
+    "title": "وصول سريع",
+    "open": "فتح",
+    "leads": "العملاء المحتملون",
+    "leadsSub": "تتبّع وحوّل العملاء الساخنين",
+    "templates": "القوالب",
+    "templatesSub": "قوالب رسائل جاهزة للإرسال",
+    "tags": "الوسوم",
+    "tagsSub": "نظّم جهات الاتصال بالتسميات"
+  },
+  "session": {
+    "title": "جلسة واتساب",
+    "connected": "متصل",
+    "connecting": "جاري الاتصال",
+    "disconnected": "غير متصل",
+    "disconnectedHint": "غير متصل — امسح رمز QR لإعادة الاتصال.",
+    "connectingHint": "جاري الاتصال بواتساب…",
+    "loadingHint": "جاري تحميل الجلسة…",
+    "todaysMessages": "رسائل اليوم",
+    "sentSuffix": "مُرسَلة",
+    "warmupTitle": "فترة التهيئة",
+    "dayOf": "اليوم {{day}} من ١٥",
+    "remaining": "متبقّي {{count}} · يُعاد التعيين منتصف الليل",
+    "limitReached": "تم بلوغ الحد اليومي · يُعاد التعيين منتصف الليل",
+    "unlocks": "تُفتح الطاقة الكاملة {{date}}",
+    "fullCapacity": "الطاقة الكاملة",
+    "perMinute": "حتى {{count}} / دقيقة",
+    "protectNote": "تحمي هذه الحدود رقمك من حظر واتساب.",
+    "openInbox": "فتح الوارد"
+  },
+  "connection": {
+    "aria": "اتصال واتساب",
+    "connected": "متصل",
+    "copy": "نسخ الرقم",
+    "manage": "إدارة",
+    "setupTitle": "اربط واتساب الخاص بك",
+    "setupBody": "أدخل رقمك وسنعطيك رمزاً تُدخله في واتساب.",
+    "moreOptions": "خيارات اتصال أخرى"
+  },
+  "pipelineEmpty": "لا توجد صفقات بعد",
+  "pipelineEmptyCta": "فتح لوحة الصفقات",
+  "today": {
+    "morning": "صباح الخير، {{name}}",
+    "afternoon": "مساء الخير، {{name}}",
+    "evening": "مساء الخير، {{name}}",
+    "sendingFrom": "الإرسال من",
+    "fullCapacity": "السعة الكاملة",
+    "warmup": "يوم التهيئة {{day}}",
+    "openInbox": "افتح صندوق الوارد",
+    "pulse": {
+      "open": "محادثات مفتوحة",
+      "waiting": "{{count}} بانتظار الرد",
+      "allAnswered": "تم الرد على كل المحادثات",
+      "messages": "رسائل اليوم",
+      "contacts": "جهات الاتصال",
+      "newToday": "+{{count}} جديد اليوم",
+      "noneToday": "لا جهات جديدة اليوم",
+      "hot": "عملاء ساخنون",
+      "hotToday": "+{{count}} أصبحوا ساخنين اليوم",
+      "noHotToday": "لا جديد اليوم",
+      "last7": "آخر ٧ أيام"
+    },
+    "queue": {
+      "title": "بانتظارك",
+      "sub": "المحادثات المفتوحة، الأطول انتظاراً أولاً",
+      "emptyTitle": "لا أحد ينتظر",
+      "emptySub": "تم الرد على كل المحادثات المفتوحة. ستظهر الرسائل الجديدة هنا.",
+      "reply": "رد",
+      "unassigned": "غير مُسندة",
+      "waitingFor": "ينتظر منذ {{time}}",
+      "viewAll": "افتح صندوق الوارد",
+      "more": "+{{count}} أخرى في صندوق الوارد"
+    },
+    "leads": {
+      "title": "عملاء ساخنون",
+      "sub": "الأقرب للشراء",
+      "empty": "لا يوجد عملاء ساخنون الآن",
+      "emptySub": "يظهر العملاء هنا عندما يرصد الذكاء الاصطناعي نية الشراء.",
+      "viewAll": "كل العملاء المحتملين"
+    },
+    "activity": {
+      "title": "نشاط الرسائل",
+      "sub": "المرسلة والمستلمة، آخر ٧ أيام",
+      "sent": "مرسلة",
+      "received": "مستلمة",
+      "total": "الإجمالي",
+      "empty": "لا رسائل في آخر ٧ أيام"
+    },
+    "pipeline": {
+      "title": "مسار المبيعات",
+      "sub": "الصفقات حسب المرحلة",
+      "openValue": "القيمة المفتوحة",
+      "winRate": "نسبة الفوز",
+      "deals": "{{count}} صفقة",
+      "empty": "لا توجد صفقات بعد",
+      "emptySub": "ستظهر هنا الصفقات التي تنشئها من المحادثات.",
+      "cta": "افتح الصفقات"
+    },
+    "team": {
+      "title": "الفريق",
+      "sub": "عبء العمل والسرعة",
+      "agent": "الموظف",
+      "open": "مفتوحة",
+      "resolved": "محلولة",
+      "resolution": "نسبة الحل",
+      "firstResponse": "أول رد",
+      "min": "{{n}} د",
+      "empty": "لا يوجد نشاط للموظفين بعد",
+      "manage": "إدارة الفريق"
+    },
+    "brief": {
+      "waiting_one": "<b>عميل واحد</b> ينتظر الرد",
+      "waiting_other": "<b>{{count}} عملاء</b> ينتظرون الرد",
+      "none": "لا أحد ينتظر الرد",
+      "longest": " — أطولهم منذ <w>{{time}}</w>",
+      "hot_one": "<b>عميل محتمل واحد</b> أصبح ساخناً اليوم",
+      "hot_other": "<b>{{count}} عملاء محتملين</b> أصبحوا ساخنين اليوم",
+      "noHot": "لا عملاء ساخنين جدد اليوم",
+      "volume": "<b>{{count}}</b> رسالة حتى الآن اليوم",
+      "and": "و",
+      "sections": {
+        "act": "تحرّك الآن",
+        "understand": "هذا الأسبوع",
+        "team": "فريقك"
+      }
+    }
+  }
+}

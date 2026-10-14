@@ -1,0 +1,79 @@
+# Dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# Build outputs
+dist/
+build/
+.next/
+out/
+
+# Environment variables — NEVER commit secrets
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+.env*.local
+
+# WhatsApp session credentials
+auth_info_baileys/
+
+# Per-tenant instances (secrets + WhatsApp sessions) — never commit.
+# NOTE: anchored with a leading slash so it only matches these runtime instance
+# dirs — a bare `tenants/` also matched `apps/backend/src/tenants/` (real source),
+# which silently kept the multi-tenant code out of the repo and broke the build.
+/apps/backend/tenants/
+/tenants/
+
+# Per-tenant / backup AI configs (runtime data, not source) — keep only the shared ai-config.json
+apps/backend/config/ai-config.*.json
+apps/backend/config/*.backup.json
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+logsbackend-*.log
+logsbackend-*.err.log
+logsbackend-*.out.log
+backend.log
+
+# TypeScript
+*.tsbuildinfo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Uploads (user-generated content, not source)
+apps/backend/uploads/
+
+# Prisma generated client (regenerated on install)
+apps/backend/node_modules/
+
+# IDE
+.vscode/settings.json
+.idea/
+
+# Memory (Claude Code internal)
+memory/
+skills/
+
+# npm cache
+.npm-cache/
+
+# Misc
+*.xlsx
+New XLSX Worksheet.xlsx
+
+# Marketing render output — regenerate with `node marketing/tools/render.mjs`.
+# Anchored to the repo root so these never match a source dir named out/ or html/.
+/marketing/out/
+/marketing/html/
+
+# Local env backups contain real secrets
+**/.env.backup*
